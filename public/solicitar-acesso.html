@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlowProd — Solicitar Acesso</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#080d14;--surface:#0d1520;--border:#1a2740;
+    --text:#e8edf5;--muted:#6b82a0;--dim:#3a5070;
+    --blue:#2b7fff;--blue-dk:#1a5ccc;--green:#22c55e;
+    --amber:#f59e0b;--error:#f43f5e;--cyan:#06b6d4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;padding:16px;}
+  .back{position:fixed;top:18px;left:22px;color:var(--muted);font-size:13px;
+    text-decoration:none;display:flex;align-items:center;gap:5px;transition:.2s;}
+  .back:hover{color:var(--blue);}
+
+  /* Card principal */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:24px 32px;width:100%;max-width:560px;display:flex;flex-direction:column;gap:14px;}
+  .card-top{text-align:center;display:flex;flex-direction:column;gap:4px;}
+  .logo{font-size:19px;font-weight:700;color:var(--blue);letter-spacing:1px;}
+  .badge{display:inline-block;padding:4px 14px;border-radius:6px;font-size:11px;
+    font-weight:700;letter-spacing:1px;text-transform:uppercase;
+    background:rgba(43,127,255,.12);color:var(--blue);border:1px solid rgba(43,127,255,.2);margin:0 auto;}
+  h2{font-size:20px;font-weight:700;}
+  .sub{color:var(--muted);font-size:13px;line-height:1.6;}
+
+  /* Abas */
+  .tabs{display:flex;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+  .tab{flex:1;padding:9px 4px;text-align:center;font-size:12px;font-weight:600;
+    cursor:pointer;background:var(--bg);color:var(--muted);transition:.2s;
+    border:none;font-family:'Poppins',sans-serif;}
+  .tab.active{background:var(--blue);color:#fff;}
+
+  /* Campos */
+  .form-group{display:flex;flex-direction:column;gap:5px;}
+  label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;}
+  .req{color:var(--error);}
+  input{background:var(--bg);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);font-family:'Poppins',sans-serif;font-size:14px;
+    padding:10px 14px;transition:.2s;outline:none;width:100%;}
+  input:focus{border-color:var(--blue);}
+  .pass-wrap{position:relative;}
+  .pass-wrap input{padding-right:40px;}
+  .eye{position:absolute;right:11px;top:50%;transform:translateY(-50%);
+    background:none;border:none;cursor:pointer;font-size:15px;color:var(--muted);}
+
+  /* Grid de módulos */
+  .modulos-label{font-size:11px;font-weight:600;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.7px;margin-bottom:2px;}
+  .modulos-sub{font-size:11px;color:var(--dim);margin-bottom:6px;}
+  .modulos-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
+  .modulo-item{display:flex;align-items:center;gap:8px;
+    background:var(--bg);border:1px solid var(--border);border-radius:9px;
+    padding:8px 10px;cursor:pointer;transition:.2s;user-select:none;}
+  .modulo-item:hover{border-color:rgba(43,127,255,.4);}
+  .modulo-item.selecionado{border-color:var(--blue);background:rgba(43,127,255,.07);}
+  .modulo-item input[type=checkbox]{display:none;}
+  .mod-check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border);
+    background:var(--bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    font-size:10px;transition:.2s;}
+  .modulo-item.selecionado .mod-check{background:var(--blue);border-color:var(--blue);color:#fff;}
+  .mod-info{display:flex;flex-direction:column;gap:1px;}
+  .mod-nome{font-size:12px;font-weight:600;}
+  .mod-desc{font-size:10px;color:var(--muted);}
+
+  /* Botão */
+  .btn{border:none;border-radius:8px;color:#fff;cursor:pointer;
+    font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;
+    padding:12px;width:100%;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px;
+    background:linear-gradient(135deg,var(--blue-dk),var(--blue));}
+  .btn:hover{opacity:.9;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-ghost{background:none;border:1px solid var(--border);color:var(--muted);margin-top:4px;}
+  .btn-ghost:hover{border-color:var(--blue);color:var(--blue);}
+  .btn-green{background:linear-gradient(135deg,#15803d,var(--green));}
+  .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);
+    border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* Mensagens */
+  .msg{border-radius:8px;font-size:13px;padding:10px 14px;text-align:center;display:none;}
+  .msg.err{background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.25);color:var(--error);}
+  .msg.ok {background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.25); color:var(--green);}
+  .msg.inf{background:rgba(43,127,255,.1);border:1px solid rgba(43,127,255,.25);color:var(--blue);}
+  .info-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;
+    padding:11px 14px;font-size:12px;color:var(--dim);line-height:1.7;}
+
+  .divider{display:flex;align-items:center;gap:10px;color:var(--dim);font-size:12px;}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+  .link-row{text-align:center;font-size:13px;color:var(--dim);}
+  .link-row a{color:var(--blue);text-decoration:none;font-weight:500;}
+
+  /* Tela de status */
+  #telaStatus{width:100%;max-width:460px;display:none;}
+  .status-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:44px 32px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px;}
+  .pulse-ring{width:90px;height:90px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:44px;
+    border:2px solid rgba(245,158,11,.3);background:rgba(245,158,11,.06);
+    animation:ringpulse 2.5s ease-in-out infinite;}
+  .pulse-ring.green{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.07);animation:ringgreen 2.5s ease-in-out infinite;}
+  .pulse-ring.red{border-color:rgba(244,63,94,.35);background:rgba(244,63,94,.07);animation:none;}
+  @keyframes ringpulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.25)}50%{box-shadow:0 0 0 14px rgba(245,158,11,0)}}
+  @keyframes ringgreen{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.25)}50%{box-shadow:0 0 0 14px rgba(34,197,94,0)}}
+  .st-title{font-size:21px;font-weight:700;}
+  .st-badge{padding:6px 20px;border-radius:8px;font-size:12px;font-weight:700;letter-spacing:1px;}
+  .bd-pend{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.25);}
+  .bd-aprov{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.25);}
+  .bd-recus{background:rgba(244,63,94,.12);color:var(--error);border:1px solid rgba(244,63,94,.25);}
+  .st-sub{font-size:13px;color:var(--muted);line-height:1.7;max-width:360px;}
+  .st-poll{font-size:11px;color:var(--dim);}
+</style>
+</head>
+<body>
+<a href="/login.html" class="back">← Voltar ao login</a>
+
+<!-- TELA 1: Formulário -->
+<div id="telaFormulario">
+  <div class="card">
+    <div class="card-top">
+      <span class="logo">FlowProd</span>
+      <span class="badge">🏭 Colaborador</span>
+      <h2>Solicitar Acesso</h2>
+      <p class="sub">Preencha os dados e selecione os módulos que precisa acessar.</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tabSolicitar" onclick="aba('solicitar')">Solicitar Acesso</button>
+      <button class="tab"        id="tabStatus"    onclick="aba('status')">Ver Status</button>
+    </div>
+
+    <!-- ABA: SOLICITAR -->
+    <div id="secSolicitar">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="form-group">
+          <label>Nome completo <span class="req">*</span></label>
+          <input type="text" id="sNome" placeholder="Seu nome completo" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>E-mail <span class="req">*</span></label>
+          <input type="email" id="sEmail" placeholder="seu@empresa.com" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Senha desejada <span class="req">*</span></label>
+          <div class="pass-wrap">
+            <input type="password" id="sSenha" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+            <button class="eye" type="button" onclick="eyeToggle('sSenha',this)">👁</button>
+          </div>
+        </div>
+
+        <!-- Módulos -->
+        <div>
+          <div class="modulos-label">Módulos de acesso <span class="req">*</span></div>
+          <div class="modulos-sub">Selecione as telas que você precisa acessar</div>
+          <div class="modulos-grid" id="modulosGrid">
+            <label class="modulo-item" onclick="toggleModulo(this,'FORECAST')">
+              <input type="checkbox" value="FORECAST">
+              <div class="mod-check"></div>
+              <div class="mod-info">
+                <span class="mod-nome">📊 Forecast</span>
+                <span class="mod-desc">Previsão de demanda</span>
+              </div>
+            </label>
+            <label class="modulo-item" onclick="toggleModulo(this,'PMP')">
+              <input type="checkbox" value="PMP">
+              <div class="mod-check"></div>
+              <div class="mod-info">
+                <span class="mod-nome">📋 PMP</span>
+                <span class="mod-desc">Plano Mestre de Produção</span>
+              </div>
+            </label>
+            <label class="modulo-item" onclick="toggleModulo(this,'MRP')">
+              <input type="checkbox" value="MRP">
+              <div class="mod-check"></div>
+              <div class="mod-info">
+                <span class="mod-nome">⚙️ MRP</span>
+                <span class="mod-desc">Planejamento de recursos</span>
+              </div>
+            </label>
+            <label class="modulo-item" onclick="toggleModulo(this,'ESTOQUE')">
+              <input type="checkbox" value="ESTOQUE">
+              <div class="mod-check"></div>
+              <div class="mod-info">
+                <span class="mod-nome">📦 Estoque</span>
+                <span class="mod-desc">Gestão de estoque</span>
+              </div>
+            </label>
+            <label class="modulo-item" onclick="toggleModulo(this,'CRP')">
+              <input type="checkbox" value="CRP">
+              <div class="mod-check"></div>
+              <div class="mod-info">
+                <span class="mod-nome">🏭 CRP</span>
+                <span class="mod-desc">Planejamento de capacidade</span>
+              </div>
+            </label>
+            <label class="modulo-item" onclick="toggleModulo(this,'DASHBOARD')">
+              <input type="checkbox" value="DASHBOARD">
+              <div class="mod-check"></div>
+              <div class="mod-info">
+                <span class="mod-nome">📈 Dashboard</span>
+                <span class="mod-desc">KPIs e indicadores</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="msg" id="solMsg"></div>
+        <button class="btn" id="solBtn" onclick="solicitar()">
+          <span id="solTxt">Enviar Solicitação</span>
+          <div class="spinner" id="solSp"></div>
+        </button>
+        <div class="info-box">🔔 Após enviar, use a aba <strong style="color:var(--blue)">Ver Status</strong> para acompanhar a aprovação em tempo real.</div>
+      </div>
+    </div>
+
+    <!-- ABA: VER STATUS -->
+    <div id="secStatus" style="display:none;">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="form-group">
+          <label>E-mail da solicitação <span class="req">*</span></label>
+          <input type="email" id="vEmail" placeholder="e-mail que você usou ao solicitar">
+        </div>
+        <div class="msg" id="vMsg"></div>
+        <button class="btn" id="vBtn" onclick="verStatus()">
+          <span id="vTxt">Verificar Status</span>
+          <div class="spinner" id="vSp"></div>
+        </button>
+        <div class="info-box">🔍 Digite o e-mail usado na solicitação para ver se foi aprovada, está em análise ou foi recusada.</div>
+      </div>
+    </div>
+
+    <div class="divider">ou</div>
+    <div class="link-row">Já tem conta? <a href="/login.html">Fazer login →</a></div>
+  </div>
+</div>
+
+<!-- TELA 2: Status -->
+<div id="telaStatus">
+  <div class="status-card">
+    <div class="pulse-ring" id="stRing">
+      <span id="stIcon">⏳</span>
+    </div>
+    <div>
+      <div class="st-title" id="stTitle">Verificando...</div>
+    </div>
+    <span class="st-badge bd-pend" id="stBadge">EM ANÁLISE</span>
+    <p class="st-sub" id="stSub">Aguarde...</p>
+    <div class="st-poll" id="stPoll"></div>
+    <button class="btn btn-green" id="btnEntrar" style="display:none" onclick="window.location.href='/login.html'">
+      Fazer login agora →
+    </button>
+    <button class="btn btn-ghost" onclick="voltarFormulario()">← Voltar</button>
+  </div>
+</div>
+
+<script>
+  let _email   = '';
+  let _polling = null;
+
+  // ── Utilitários ──────────────────────────────────────────
+  function aba(t) {
+    ['Solicitar','Status'].forEach(n => {
+      const sec = document.getElementById('sec' + n);
+      const tab = document.getElementById('tab' + n);
+      sec.style.display = (n.toLowerCase() === t) ? 'block' : 'none';
+      tab.classList.toggle('active', n.toLowerCase() === t);
+    });
+    document.getElementById('solMsg').style.display = 'none';
+    document.getElementById('vMsg').style.display   = 'none';
+  }
+
+  function eyeToggle(id, btn) {
+    const inp = document.getElementById(id);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+  }
+
+  function mostrarMsg(id, txt, tipo) {
+    const el = document.getElementById(id);
+    el.textContent = txt;
+    el.className = `msg ${tipo}`;
+    el.style.display = 'block';
+  }
+
+  function load(btnId, txtId, spId, on) {
+    document.getElementById(btnId).disabled = on;
+    document.getElementById(txtId).style.display = on ? 'none' : 'block';
+    document.getElementById(spId).style.display  = on ? 'block' : 'none';
+  }
+
+  // ── Módulos ──────────────────────────────────────────────
+  function toggleModulo(label, valor) {
+    // Previne duplo disparo do click no label/input
+    setTimeout(() => {
+      const cb = label.querySelector('input[type=checkbox]');
+      label.classList.toggle('selecionado', cb.checked);
+      const check = label.querySelector('.mod-check');
+      check.textContent = cb.checked ? '✓' : '';
+    }, 0);
+  }
+
+  function getFuncoesSelecionadas() {
+    return Array.from(document.querySelectorAll('#modulosGrid input[type=checkbox]:checked'))
+      .map(cb => cb.value);
+  }
+
+  // ── Solicitar ────────────────────────────────────────────
+  async function solicitar() {
+    document.getElementById('solMsg').style.display = 'none';
+    const nome   = document.getElementById('sNome').value.trim();
+    const email  = document.getElementById('sEmail').value.trim();
+    const senha  = document.getElementById('sSenha').value;
+    const funcoes = getFuncoesSelecionadas();
+
+    if (!nome)          return mostrarMsg('solMsg', 'Informe seu nome completo.', 'err');
+    if (!email)         return mostrarMsg('solMsg', 'Informe seu e-mail.', 'err');
+    if (senha.length < 6) return mostrarMsg('solMsg', 'A senha deve ter no mínimo 6 caracteres.', 'err');
+    if (funcoes.length === 0) return mostrarMsg('solMsg', 'Selecione ao menos um módulo de acesso.', 'err');
+
+    load('solBtn','solTxt','solSp', true);
+    try {
+      const r = await fetch('/api/solicitacoes-executor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, email, senha, funcoes })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.erro || 'Erro ao enviar solicitação.');
+      _email = email;
+      localStorage.setItem('flowprod_exec_sol_email', email);
+      mostrarTelaStatus('PENDENTE');
+    } catch(e) {
+      load('solBtn','solTxt','solSp', false);
+      mostrarMsg('solMsg', e.message, 'err');
+    }
+  }
+
+  // ── Ver Status ───────────────────────────────────────────
+  async function verStatus() {
+    document.getElementById('vMsg').style.display = 'none';
+    const email = document.getElementById('vEmail').value.trim();
+    if (!email) return mostrarMsg('vMsg', 'Informe o e-mail da solicitação.', 'err');
+    load('vBtn','vTxt','vSp', true);
+    try {
+      const r = await fetch(`/api/solicitacoes-executor/status?email=${encodeURIComponent(email)}`);
+      if (r.status === 404) {
+        load('vBtn','vTxt','vSp', false);
+        return mostrarMsg('vMsg', 'Nenhuma solicitação encontrada com este e-mail.', 'err');
+      }
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.erro || 'Erro ao verificar.');
+      _email = email;
+      localStorage.setItem('flowprod_exec_sol_email', email);
+      mostrarTelaStatus(d.status);
+    } catch(e) {
+      load('vBtn','vTxt','vSp', false);
+      mostrarMsg('vMsg', e.message, 'err');
+    }
+  }
+
+  // ── Tela de Status ───────────────────────────────────────
+  function mostrarTelaStatus(status) {
+    document.getElementById('telaFormulario').style.display = 'none';
+    document.getElementById('telaStatus').style.display     = 'block';
+    atualizarStatusUI(status);
+    if (status === 'PENDENTE') iniciarPolling();
+  }
+
+  function atualizarStatusUI(status) {
+    const ring   = document.getElementById('stRing');
+    const icon   = document.getElementById('stIcon');
+    const title  = document.getElementById('stTitle');
+    const badge  = document.getElementById('stBadge');
+    const sub    = document.getElementById('stSub');
+    const poll   = document.getElementById('stPoll');
+    const btnEnt = document.getElementById('btnEntrar');
+
+    btnEnt.style.display = 'none';
+
+    if (status === 'PENDENTE') {
+      ring.className = 'pulse-ring';
+      icon.textContent  = '⏳';
+      badge.textContent = 'EM ANÁLISE';
+      badge.className   = 'st-badge bd-pend';
+      title.textContent = 'Solicitação em análise';
+      sub.textContent   = 'Sua solicitação foi recebida pelo administrador e está sendo analisada. Esta tela atualiza automaticamente a cada 10 segundos.';
+      poll.textContent  = '🔄 Verificando automaticamente...';
+
+    } else if (status === 'APROVADO') {
+      ring.className = 'pulse-ring green';
+      icon.textContent  = '🎉';
+      badge.textContent = 'APROVADO';
+      badge.className   = 'st-badge bd-aprov';
+      title.textContent = 'Acesso liberado!';
+      sub.textContent   = 'Sua solicitação foi aprovada! Agora você pode fazer login com o e-mail e a senha que você cadastrou.';
+      poll.textContent  = '';
+      pararPolling();
+      btnEnt.style.display = 'flex';
+      localStorage.removeItem('flowprod_exec_sol_email');
+
+    } else if (status === 'RECUSADO') {
+      ring.className = 'pulse-ring red';
+      icon.textContent  = '❌';
+      badge.textContent = 'RECUSADO';
+      badge.className   = 'st-badge bd-recus';
+      title.textContent = 'Solicitação não aprovada';
+      sub.textContent   = 'Sua solicitação não foi aprovada pelo administrador. Entre em contato para mais informações.';
+      poll.textContent  = '';
+      pararPolling();
+    }
+  }
+
+  function iniciarPolling() {
+    pararPolling();
+    let n = 0;
+    _polling = setInterval(async () => {
+      if (!_email) return;
+      n++;
+      document.getElementById('stPoll').textContent = `🔄 Verificando... (${n})`;
+      try {
+        const r = await fetch(`/api/solicitacoes-executor/status?email=${encodeURIComponent(_email)}`);
+        if (!r.ok) return;
+        const d = await r.json();
+        if (d.status !== 'PENDENTE') atualizarStatusUI(d.status);
+      } catch {}
+    }, 10000);
+  }
+
+  function pararPolling() {
+    if (_polling) { clearInterval(_polling); _polling = null; }
+  }
+
+  function voltarFormulario() {
+    pararPolling();
+    document.getElementById('telaFormulario').style.display = 'block';
+    document.getElementById('telaStatus').style.display     = 'none';
+    load('solBtn','solTxt','solSp', false);
+    load('vBtn','vTxt','vSp', false);
+  }
+
+  // ── Restaura sessão pelo localStorage ───────────────────
+  (async () => {
+    const emailSalvo = localStorage.getItem('flowprod_exec_sol_email');
+    if (!emailSalvo) return;
+    try {
+      const r = await fetch(`/api/solicitacoes-executor/status?email=${encodeURIComponent(emailSalvo)}`);
+      if (!r.ok) { localStorage.removeItem('flowprod_exec_sol_email'); return; }
+      const d = await r.json();
+      _email = emailSalvo;
+      if (d.status === 'PENDENTE') {
+        mostrarTelaStatus('PENDENTE');
+      } else {
+        document.getElementById('vEmail').value = emailSalvo;
+        aba('status');
+      }
+    } catch {}
+  })();
+</script>
+</body>
+</html>

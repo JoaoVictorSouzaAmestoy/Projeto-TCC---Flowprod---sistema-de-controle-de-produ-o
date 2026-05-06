@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlowProd — Painel Admin</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+  :root {
+    --bg:#080d14; --panel:#0d1520; --panel2:#111e30;
+    --border:#1a2840; --border2:#243550;
+    --blue:#2b7fff; --blue-dim:#1a5ccc; --blue-glow:rgba(43,127,255,.18);
+    --cyan:#00d4ff; --green:#22c55e; --red:#ff4d6d;
+    --orange:#f97316; --purple:#a855f7;
+    --text:#e8edf5; --muted:#6b82a0; --input-bg:#0a1220;
+  }
+
+  body { min-height:100vh; background:var(--bg); font-family:'Poppins',sans-serif; color:var(--text); }
+
+  .bg-grid {
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(43,127,255,.03) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(43,127,255,.03) 1px,transparent 1px);
+    background-size:48px 48px;
+  }
+
+  /* ── Topbar ─────────────────────────────────────────────── */
+  .topbar {
+    position:sticky; top:0; z-index:50;
+    background:rgba(8,13,20,.92); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+    padding:0 32px; height:60px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .topbar-left  { display:flex; align-items:center; gap:12px; }
+  .topbar-right { display:flex; align-items:center; gap:16px; }
+  .brand-icon {
+    width:34px; height:34px;
+    background:linear-gradient(135deg,var(--blue),var(--cyan));
+    border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:17px;
+  }
+  .brand-name {
+    font-size:17px; font-weight:700; letter-spacing:-.3px;
+    background:linear-gradient(90deg,var(--text),var(--muted));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .topbar-badge {
+    font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px;
+    background:rgba(43,127,255,.12); border:1px solid rgba(43,127,255,.25); color:var(--blue); letter-spacing:.5px;
+  }
+  .badge-alerta {
+    background:var(--red); color:#fff; font-size:11px; font-weight:700;
+    padding:2px 7px; border-radius:10px; min-width:20px; text-align:center; display:none;
+  }
+  .badge-alerta.visivel { display:inline-block; }
+  .admin-info { text-align:right; font-size:12.5px; color:var(--muted); }
+  .admin-info strong { display:block; color:var(--text); font-size:13.5px; }
+  .btn-logout {
+    padding:7px 18px; background:transparent; border:1px solid var(--border2);
+    border-radius:8px; font-family:'Poppins',sans-serif; font-size:13px; color:var(--muted);
+    cursor:pointer; transition:all .2s;
+  }
+  .btn-logout:hover { border-color:var(--red); color:var(--red); }
+
+  /* ── Layout ─────────────────────────────────────────────── */
+  .main { position:relative; z-index:1; max-width:1400px; margin:0 auto; padding:36px 28px; }
+
+  .page-header { margin-bottom:28px; }
+  .page-title  { font-size:24px; font-weight:700; letter-spacing:-.5px; margin-bottom:4px; }
+  .page-sub    { font-size:13.5px; color:var(--muted); }
+
+  /* ── Abas ───────────────────────────────────────────────── */
+  .tabs { display:flex; gap:8px; margin-bottom:28px; }
+  .tab-btn {
+    padding:9px 22px; background:transparent; border:1px solid var(--border2);
+    border-radius:9px; font-family:'Poppins',sans-serif; font-size:13.5px; font-weight:500;
+    color:var(--muted); cursor:pointer; transition:all .2s;
+    display:flex; align-items:center; gap:8px;
+  }
+  .tab-btn:hover { border-color:var(--blue); color:var(--blue); }
+  .tab-btn.ativa { background:rgba(43,127,255,.12); border-color:var(--blue); color:var(--blue); }
+  .tab-content { display:none; }
+  .tab-content.ativa { display:block; }
+
+  /* ── Sino de notificações do admin ──────────────────────── */
+  .notif-sino-wrap { position:relative; }
+  .notif-sino-btn {
+    background:transparent; border:1px solid var(--border2);
+    border-radius:8px; color:var(--muted); cursor:pointer;
+    padding:6px 12px; font-size:18px; transition:.2s;
+    position:relative; display:flex; align-items:center;
+  }
+  .notif-sino-btn:hover { border-color:var(--blue); color:var(--blue); }
+  .notif-badge {
+    position:absolute; top:-8px; right:-8px;
+    background:var(--red); color:#fff; font-size:10px; font-weight:700;
+    width:20px; height:20px; border-radius:50%;
+    display:none; align-items:center; justify-content:center;
+    border:2px solid var(--bg);
+  }
+  .notif-badge.visivel { display:flex; }
+  .notif-painel {
+    display:none; position:absolute; top:calc(100% + 12px); right:0;
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:12px; width:340px; max-height:400px;
+    z-index:200; box-shadow:0 12px 40px rgba(0,0,0,.5);
+    overflow:hidden; flex-direction:column;
+  }
+  .notif-painel.ativo { display:flex; }
+  .notif-painel-header {
+    padding:14px 16px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+    flex-shrink:0;
+  }
+  .notif-painel-header span {
+    font-size:13px; font-weight:600;
+  }
+  .notif-painel-close {
+    background:none; border:none; color:var(--muted);
+    cursor:pointer; font-size:18px; transition:.2s;
+  }
+  .notif-painel-close:hover { color:var(--blue); }
+  .notif-painel-lista {
+    flex:1; overflow-y:auto;
+  }
+  .notif-painel-item {
+    padding:13px 16px; border-bottom:1px solid var(--border2);
+    display:flex; gap:10px; align-items:flex-start; transition:.15s;
+  }
+  .notif-painel-item:hover { background:var(--panel2); }
+  .notif-painel-item.nao-lida { background:rgba(43,127,255,.05); }
+  .notif-painel-dot {
+    width:7px; height:7px; border-radius:50%;
+    background:var(--blue); flex-shrink:0; margin-top:5px;
+  }
+  .notif-painel-dot.lida { background:transparent; }
+  .notif-painel-body { flex:1; }
+  .notif-painel-titulo {
+    font-size:13px; font-weight:600; margin-bottom:2px;
+  }
+  .notif-painel-msg {
+    font-size:12px; color:var(--muted); line-height:1.5;
+  }
+  .notif-painel-tempo {
+    font-size:11px; color:var(--border2); margin-top:4px;
+  }
+  .notif-painel-vazio {
+    padding:32px; text-align:center; color:var(--border2);
+    font-size:13px;
+  }
+
+  /* ── Grid executores ────────────────────────────────────── */
+  .grid-executores {
+    display:grid;
+    grid-template-columns: 320px 1fr;
+    gap:24px;
+    align-items:start;
+  }
+
+  /* ── Card formulário ────────────────────────────────────── */
+  .card-form {
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:16px; padding:28px 24px;
+    position:sticky; top:76px;
+  }
+  .card-title { font-size:15px; font-weight:600; margin-bottom:4px; }
+  .card-sub   { font-size:12.5px; color:var(--muted); margin-bottom:24px; }
+
+  .field { margin-bottom:16px; }
+  label {
+    display:block; font-size:11px; font-weight:600; color:var(--muted);
+    letter-spacing:.6px; text-transform:uppercase; margin-bottom:6px;
+  }
+  .input-wrap { position:relative; }
+  .input-icon {
+    position:absolute; left:12px; top:50%; transform:translateY(-50%);
+    font-size:14px; color:var(--muted); pointer-events:none;
+  }
+  input[type="text"], input[type="email"], input[type="password"] {
+    width:100%; background:var(--input-bg); border:1px solid var(--border);
+    border-radius:9px; padding:11px 14px 11px 38px; font-size:13.5px;
+    color:var(--text); font-family:'Poppins',sans-serif; outline:none;
+    transition:border-color .2s,box-shadow .2s; -webkit-appearance:none;
+  }
+  input::placeholder { color:#3a5070; }
+  input:focus { border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-glow); }
+  .eye-btn {
+    position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    background:none; border:none; cursor:pointer; color:var(--muted); font-size:14px;
+  }
+  .eye-btn:hover { color:var(--text); }
+
+  /* ── Checkboxes de funções ──────────────────────────────── */
+  .funcoes-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:8px;
+    margin-top:4px;
+  }
+  .funcao-check {
+    display:flex; align-items:center; gap:8px;
+    padding:9px 12px;
+    background:var(--input-bg); border:1px solid var(--border);
+    border-radius:8px; cursor:pointer;
+    transition:border-color .2s, background .2s;
+    user-select:none;
+  }
+  .funcao-check:hover { border-color:var(--border2); }
+  .funcao-check.selecionada { border-color: var(--blue); background:rgba(43,127,255,.08); }
+  .funcao-check input[type="checkbox"] { display:none; }
+  .check-dot {
+    width:10px; height:10px; border-radius:50%; flex-shrink:0;
+    border:2px solid var(--border2); transition:all .15s;
+  }
+  .funcao-check.selecionada .check-dot { border-color:transparent; }
+  .check-label { font-size:12.5px; font-weight:500; }
+  .check-sub   { font-size:10.5px; color:var(--muted); display:block; }
+
+  .btn-criar {
+    width:100%; padding:12px;
+    background:linear-gradient(135deg,var(--blue-dim),var(--blue));
+    border:none; border-radius:9px; font-family:'Poppins',sans-serif;
+    font-size:14px; font-weight:600; color:#fff; cursor:pointer;
+    margin-top:6px; transition:transform .15s,box-shadow .2s,opacity .2s;
+    box-shadow:0 4px 20px rgba(43,127,255,.25); position:relative; overflow:hidden;
+  }
+  .btn-criar:hover { transform:translateY(-1px); box-shadow:0 6px 28px rgba(43,127,255,.4); }
+  .btn-criar:active { transform:translateY(0); }
+  .btn-criar:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+  .spinner-btn {
+    display:none; width:16px; height:16px;
+    border:2px solid rgba(255,255,255,.3); border-top-color:#fff;
+    border-radius:50%; animation:spin .6s linear infinite; margin:0 auto;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .toast {
+    display:none; margin-top:12px; padding:10px 14px;
+    border-radius:8px; font-size:13px; font-weight:500; animation:fadeUp .3s ease;
+  }
+  .toast.ok  { background:rgba(34,197,94,.1);  border:1px solid rgba(34,197,94,.3);  color:var(--green); }
+  .toast.err { background:rgba(255,77,109,.1); border:1px solid rgba(255,77,109,.3); color:var(--red); }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── Card lista ─────────────────────────────────────────── */
+  .card-lista {
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:16px; overflow:hidden;
+  }
+  .lista-header {
+    padding:20px 24px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .lista-titulo { font-size:15px; font-weight:600; }
+  .total-badge {
+    font-size:12px; font-weight:600; padding:3px 10px; border-radius:20px;
+    background:rgba(43,127,255,.1); border:1px solid rgba(43,127,255,.2); color:var(--blue);
+  }
+  .busca-wrap { padding:14px 24px; border-bottom:1px solid var(--border); }
+  .busca-wrap input { padding:9px 14px 9px 36px; font-size:13px; }
+  .busca-wrap .input-icon { font-size:13px; left:11px; }
+
+  /* Tabela */
+  .tabela-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; }
+  thead th {
+    padding:11px 20px; font-size:11px; font-weight:600; color:var(--muted);
+    letter-spacing:.5px; text-transform:uppercase; text-align:left;
+    border-bottom:1px solid var(--border); background:rgba(255,255,255,.02);
+    white-space:nowrap;
+  }
+  tbody tr { border-bottom:1px solid var(--border); transition:background .15s; }
+  tbody tr:last-child { border-bottom:none; }
+  tbody tr:hover { background:rgba(43,127,255,.04); }
+  td { padding:13px 20px; font-size:13.5px; vertical-align:middle; }
+
+  .user-info { display:flex; flex-direction:column; gap:2px; }
+  .user-nome  { font-weight:500; font-size:13.5px; }
+  .user-email { font-size:11.5px; color:var(--muted); }
+
+  /* Badges de função — múltiplos */
+  .funcoes-badges { display:flex; flex-wrap:wrap; gap:5px; }
+  .badge-funcao {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:3px 9px; border-radius:6px; font-size:11px; font-weight:600;
+    letter-spacing:.3px; border:1px solid; white-space:nowrap;
+  }
+  .dot { width:5px; height:5px; border-radius:50%; }
+
+  .badge-status {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:500; border:1px solid;
+    white-space:nowrap;
+  }
+  .badge-status.ativo   { background:rgba(34,197,94,.08);  border-color:rgba(34,197,94,.25);  color:var(--green); }
+  .badge-status.inativo { background:rgba(107,130,160,.08);border-color:rgba(107,130,160,.25);color:var(--muted); }
+
+  .acoes { display:flex; align-items:center; gap:6px; }
+  .btn-acao {
+    padding:5px 12px; background:transparent; border:1px solid var(--border2);
+    border-radius:7px; font-family:'Poppins',sans-serif; font-size:12px; color:var(--muted);
+    cursor:pointer; transition:all .2s; white-space:nowrap;
+  }
+  .btn-acao:hover        { border-color:var(--blue); color:var(--blue); }
+  .btn-acao.remover:hover{ border-color:var(--red);  color:var(--red);  }
+  .btn-acao.ativar:hover { border-color:var(--green);color:var(--green);}
+
+  .estado-vazio { padding:56px 20px; text-align:center; color:var(--muted); }
+  .estado-vazio .icone { font-size:38px; margin-bottom:10px; }
+  .estado-vazio p { font-size:13.5px; }
+  .carregando { padding:36px; text-align:center; color:var(--muted); font-size:14px; }
+
+  /* ── Aba Senhas ─────────────────────────────────────────── */
+  .sol-lista { display:flex; flex-direction:column; gap:12px; padding:20px; }
+  .sol-card {
+    background:var(--panel2); border:1px solid var(--border); border-radius:12px;
+    padding:18px 22px; display:flex; align-items:center; gap:18px; transition:border-color .2s;
+  }
+  .sol-card.pendente { border-left:3px solid var(--orange); }
+  .sol-card.aprovada { border-left:3px solid var(--green); opacity:.7; }
+  .sol-card.recusada { border-left:3px solid var(--red);   opacity:.6; }
+  .sol-avatar {
+    width:42px; height:42px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:19px;
+  }
+  .sol-info { flex:1; }
+  .sol-nome { font-size:14px; font-weight:600; margin-bottom:3px; }
+  .sol-meta { font-size:12px; color:var(--muted); }
+  .sol-status {
+    font-size:11.5px; font-weight:600; padding:3px 11px; border-radius:20px; border:1px solid; white-space:nowrap;
+  }
+  .sol-status.pendente { color:var(--orange);background:rgba(249,115,22,.08);border-color:rgba(249,115,22,.3); }
+  .sol-status.aprovada { color:var(--green); background:rgba(34,197,94,.08); border-color:rgba(34,197,94,.3); }
+  .sol-status.recusada { color:var(--red);   background:rgba(255,77,109,.08);border-color:rgba(255,77,109,.3); }
+  .sol-acoes { display:flex; gap:8px; align-items:center; }
+  .input-nova-senha {
+    background:var(--input-bg) !important; border:1px solid var(--border) !important;
+    border-radius:7px !important; padding:7px 11px !important; color:var(--text) !important;
+    font-family:'Poppins',sans-serif !important; font-size:13px !important;
+    outline:none !important; width:150px !important; transition:border-color .2s !important;
+  }
+  .btn-aprovar {
+    padding:6px 14px; background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.3);
+    border-radius:7px; font-family:'Poppins',sans-serif; font-size:12px; font-weight:600;
+    color:var(--green); cursor:pointer; transition:all .2s; white-space:nowrap;
+  }
+  .btn-aprovar:hover { background:rgba(34,197,94,.2); }
+  .btn-recusar {
+    padding:6px 14px; background:transparent; border:1px solid var(--border2);
+    border-radius:7px; font-family:'Poppins',sans-serif; font-size:12px; color:var(--muted);
+    cursor:pointer; transition:all .2s; white-space:nowrap;
+  }
+  .btn-recusar:hover { border-color:var(--red); color:var(--red); }
+  .sol-vazio { padding:56px; text-align:center; color:var(--muted); }
+  .sol-vazio .icone { font-size:38px; margin-bottom:10px; }
+
+  /* ── Modal ──────────────────────────────────────────────── */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; z-index:100;
+    background:rgba(8,13,20,.85); backdrop-filter:blur(8px);
+    align-items:center; justify-content:center;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal {
+    background:var(--panel); border:1px solid var(--border2); border-radius:14px;
+    padding:32px 36px; width:100%; max-width:360px;
+    box-shadow:0 24px 60px rgba(0,0,0,.5);
+    animation:scaleIn .2s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes scaleIn { from{transform:scale(.92);opacity:0} to{transform:scale(1);opacity:1} }
+  .modal-icone { font-size:34px; margin-bottom:12px; }
+  .modal-titulo { font-size:17px; font-weight:700; margin-bottom:8px; }
+  .modal-texto  { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:22px; }
+  .modal-acoes  { display:flex; gap:10px; }
+  .btn-confirmar {
+    flex:1; padding:11px; background:var(--red); border:none; border-radius:8px;
+    font-family:'Poppins',sans-serif; font-size:13.5px; font-weight:600;
+    color:#fff; cursor:pointer; transition:opacity .2s;
+  }
+  .btn-confirmar:hover { opacity:.85; }
+  .btn-cancelar {
+    flex:1; padding:11px; background:transparent; border:1px solid var(--border2);
+    border-radius:8px; font-family:'Poppins',sans-serif; font-size:13.5px; color:var(--muted);
+    cursor:pointer; transition:all .2s;
+  }
+  .btn-cancelar:hover { border-color:var(--text); color:var(--text); }
+
+  @media (max-width:900px) {
+    .grid-executores { grid-template-columns:1fr; }
+    .card-form { position:static; }
+  }
+
+  /* ── Modal convite ── */
+  .convite-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.8);
+    display:flex;align-items:center;justify-content:center;z-index:300;padding:16px;
+  }
+  .convite-box{
+    background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:40px 36px;width:100%;max-width:400px;
+    display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;
+  }
+  .convite-box h3{font-size:19px;font-weight:700;}
+  .convite-box p{color:var(--muted);font-size:13px;line-height:1.6;}
+  .convite-codigo{
+    font-family:'Consolas',monospace;font-size:28px;font-weight:800;
+    color:var(--blue);background:var(--bg);padding:14px 28px;
+    border-radius:10px;border:2px solid rgba(43,127,255,.3);
+    letter-spacing:4px;width:100%;text-align:center;
+  }
+  .convite-link{
+    font-size:12px;color:var(--dim);background:var(--bg);padding:8px 14px;
+    border-radius:7px;border:1px solid var(--border);width:100%;word-break:break-all;
+    text-align:center;
+  }
+  .convite-info{
+    background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);
+    border-radius:8px;padding:10px 14px;font-size:12px;color:var(--amber);
+    line-height:1.6;width:100%;
+  }
+  .btn-copy-convite{
+    background:none;border:1px solid var(--border);color:var(--muted);
+    padding:8px 18px;border-radius:7px;cursor:pointer;
+    font-family:'Poppins',sans-serif;font-size:12px;transition:.2s;
+  }
+  .btn-copy-convite:hover{border-color:var(--blue);color:var(--blue);}
+  .btn-fechar-convite{
+    background:var(--blue);border:none;color:#fff;padding:11px 32px;
+    border-radius:8px;cursor:pointer;font-family:'Poppins',sans-serif;
+    font-size:14px;font-weight:600;transition:.2s;width:100%;
+  }
+  .btn-fechar-convite:hover{background:var(--blue-dk);}
+
+
+  /* modal-cred-executor placeholder */
+
+
+  /* ── Modal credenciais do executor ── */
+  .mcred-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.8);
+    display:flex;align-items:center;justify-content:center;z-index:300;padding:16px;
+  }
+  .mcred-box{
+    background:var(--surface);border:1px solid rgba(34,197,94,.25);border-radius:16px;
+    padding:40px 32px;width:100%;max-width:420px;
+    display:flex;flex-direction:column;gap:16px;text-align:center;
+  }
+  .mcred-icon{font-size:48px;}
+  .mcred-title{font-size:19px;font-weight:700;}
+  .mcred-sub{color:var(--muted);font-size:13px;line-height:1.6;}
+  .mcred-dados{
+    background:var(--bg);border:1px solid rgba(34,197,94,.2);border-radius:10px;
+    padding:16px 20px;text-align:left;display:flex;flex-direction:column;gap:10px;
+  }
+  .mcred-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+  .mcred-label{font-size:12px;color:var(--muted);}
+  .mcred-val{font-family:'Consolas',monospace;font-size:14px;font-weight:600;
+    background:var(--surface);padding:4px 10px;border-radius:6px;
+    border:1px solid var(--border);color:var(--text);}
+  .mcred-copy{
+    background:none;border:1px solid var(--border);color:var(--muted);
+    padding:3px 10px;border-radius:5px;cursor:pointer;font-size:11px;
+    font-family:'Poppins',sans-serif;transition:.2s;
+  }
+  .mcred-copy:hover{border-color:var(--blue);color:var(--blue);}
+  .mcred-aviso{
+    background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);
+    border-radius:8px;padding:10px 14px;font-size:12px;color:var(--amber);
+    line-height:1.6;text-align:left;
+  }
+  .mcred-link{
+    font-size:12px;color:var(--muted);background:var(--bg);
+    border:1px solid var(--border);border-radius:6px;padding:8px 12px;
+    font-family:'Consolas',monospace;
+  }
+  .mcred-btn{
+    background:var(--blue);border:none;border-radius:8px;color:#fff;
+    padding:12px;width:100%;cursor:pointer;font-family:'Poppins',sans-serif;
+    font-size:14px;font-weight:600;transition:.2s;
+  }
+  .mcred-btn:hover{background:var(--blue-dk);}
+
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="brand-icon">⚙️</div>
+    <span class="brand-name">FlowProd</span>
+    <span class="topbar-badge">ADMIN</span>
+    <span class="badge-alerta" id="badgePendente">0</span>
+  </div>
+  <div class="topbar-right">
+    <div class="notif-sino-wrap">
+      <button class="notif-sino-btn" id="notifSinoBtn" onclick="abrirPainelNotif()">
+        🔔
+        <span class="notif-badge" id="notifBadge">0</span>
+      </button>
+      <div class="notif-painel" id="notifPainel">
+        <div class="notif-painel-header">
+          <span>🔔 Notificações</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button onclick="limparTodasNotifAdmin()" style="background:none;border:1px solid var(--border2);color:var(--muted);padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:'Poppins',sans-serif;transition:.2s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted)'">🗑 Limpar</button>
+            <button class="notif-painel-close" onclick="fecharPainelNotif()">✕</button>
+          </div>
+        </div>
+        <div class="notif-painel-lista" id="notifPainelLista">
+          <div class="notif-painel-vazio">Nenhuma notificação</div>
+        </div>
+      </div>
+    </div>
+    <div class="admin-info">
+      <strong id="adminNome">Carregando...</strong>
+      Administrador
+    </div>
+    <button class="btn-logout" onclick="logout()">Sair →</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="page-header">
+    <div class="page-title">⚙️ Painel Administrativo</div>
+    <div class="page-sub">Gerencie executores e solicitações de redefinição de senha</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn ativa" onclick="mudarAba('executores',this)">
+      👥 Gerenciar Executores
+      <span class="badge-alerta" id="badgeSolExec" style="display:none">0</span>
+    </button>
+    <button class="tab-btn" onclick="mudarAba('senhas',this)">
+      🔑 Redefinição de Senhas
+      <span class="badge-alerta" id="badgeAba">0</span>
+    </button>
+    <button class="tab-btn" onclick="mudarAba('clientes',this)">
+      👤 Clientes
+      <span class="badge-alerta" id="badgeClientes" style="display:none">0</span>
+    </button>
+    <button class="tab-btn" onclick="mudarAba('logs',this)">
+      📋 Logs de Ações
+    </button>
+  </div>
+
+  <!-- ABA EXECUTORES -->
+  <div class="tab-content ativa" id="tab-executores">
+
+    <!-- Título da seção de solicitações -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:16px;">
+      <span style="font-size:15px;font-weight:600;color:var(--text);">📋 Solicitações de Colaboradores</span>
+      <span class="badge-alerta" id="badgeSolExecSub" style="display:none">0</span>
+    </div>
+
+    <!-- SUB-ABA: SOLICITAÇÕES DE ACESSO -->
+    <div id="subTab-solicitacoes">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap;">
+        <div class="lista-titulo" style="margin-bottom:0;">Solicitações de Colaboradores</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="filtrarSolExec('')"        id="sfTodos"    class="tab-btn ativa" style="font-size:12px;padding:5px 12px;">Todos</button>
+          <button onclick="filtrarSolExec('PENDENTE')"  id="sfPendente" class="tab-btn" style="font-size:12px;padding:5px 12px;">⏳ Pendentes</button>
+          <button onclick="filtrarSolExec('APROVADO')"  id="sfAprovado" class="tab-btn" style="font-size:12px;padding:5px 12px;">✅ Aprovados</button>
+          <button onclick="filtrarSolExec('RECUSADO')"  id="sfRecusado" class="tab-btn" style="font-size:12px;padding:5px 12px;">❌ Recusados</button>
+        </div>
+      </div>
+      <div id="listaSolExec" style="display:flex;flex-direction:column;gap:12px;margin-top:4px;"></div>
+    </div>
+
+  </div><!-- /tab-executores -->
+
+  <!-- ABA SENHAS -->
+  <div class="tab-content" id="tab-senhas">
+    <div class="card-lista">
+      <div class="lista-header">
+        <div class="lista-titulo">Solicitações de Redefinição de Senha</div>
+        <span class="total-badge" id="totalSol">0</span>
+      </div>
+      <div id="solLista" class="sol-lista">
+        <div class="sol-vazio">
+          <div class="icone">🔄</div>
+          <p>Carregando...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL REMOVER -->
+<div class="modal-overlay" id="modalRemover">
+  <div class="modal">
+    <div class="modal-icone">🗑️</div>
+    <div class="modal-titulo">Remover executor?</div>
+    <div class="modal-texto" id="modalTexto">Esta ação não pode ser desfeita.</div>
+    <div class="modal-acoes">
+      <button class="btn-confirmar" id="btnConfirmar">Sim, remover</button>
+      <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+
+  <!-- ABA CLIENTES -->
+  <div class="tab-content" id="tab-clientes">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap;">
+      <div class="lista-titulo" style="margin-bottom:0;">Solicitações de Clientes</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="filtrarClientes('')" id="fTodos" class="tab-btn ativa" style="font-size:12px;padding:5px 12px;">Todos</button>
+        <button onclick="filtrarClientes('PENDENTE')" id="fPendente" class="tab-btn" style="font-size:12px;padding:5px 12px;">⏳ Pendentes</button>
+        <button onclick="filtrarClientes('APROVADO')" id="fAprovado" class="tab-btn" style="font-size:12px;padding:5px 12px;">✅ Aprovados</button>
+        <button onclick="filtrarClientes('RECUSADO')" id="fRecusado" class="tab-btn" style="font-size:12px;padding:5px 12px;">❌ Recusados</button>
+      </div>
+    </div>
+    <div id="listaClientes" style="display:flex;flex-direction:column;gap:12px;margin-top:16px;"></div>
+  </div>
+
+
+  <!-- ABA LOGS -->
+  <div class="tab-content" id="tab-logs">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div class="lista-titulo">Histórico de Ações</div>
+    </div>
+    <div id="listaLogs" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+
+<script>
+  // ── Configuração das funções disponíveis ─────────────────
+  const FUNCOES_CONFIG = {
+    FORECAST:  { cor:'#2b7fff', bg:'rgba(43,127,255,.1)',  borda:'rgba(43,127,255,.3)',  emoji:'📊', sub:'Previsão' },
+    PMP:       { cor:'#00d4ff', bg:'rgba(0,212,255,.1)',   borda:'rgba(0,212,255,.3)',   emoji:'📋', sub:'Plano Mestre' },
+    MRP:       { cor:'#a855f7', bg:'rgba(168,85,247,.1)',  borda:'rgba(168,85,247,.3)',  emoji:'🔩', sub:'Recursos' },
+    ESTOQUE:   { cor:'#22c55e', bg:'rgba(34,197,94,.1)',   borda:'rgba(34,197,94,.3)',   emoji:'📦', sub:'Estoque' },
+    CRP:       { cor:'#f97316', bg:'rgba(249,115,22,.1)',  borda:'rgba(249,115,22,.3)',  emoji:'🏭', sub:'Produção' },
+    DASHBOARD: { cor:'#e2c55e', bg:'rgba(226,197,94,.1)',  borda:'rgba(226,197,94,.3)', emoji:'📈', sub:'Visão geral' },
+  };
+
+  let todosUsuarios = [];
+  let idParaRemover = null;
+
+  // ── Gera checkboxes de funções ───────────────────────────
+  function gerarCheckboxes() {
+    const grid = document.getElementById('funcoesGrid');
+    if (!grid) return; // elemento não existe nesta página
+    grid.innerHTML = Object.entries(FUNCOES_CONFIG).map(([key, f]) => `
+      <label class="funcao-check" id="check-${key}" onclick="toggleFuncao('${key}')">
+        <input type="checkbox" id="cb-${key}" value="${key}">
+        <span class="check-dot" id="dot-${key}" style="background:${f.cor}22;border-color:${f.borda}"></span>
+        <span>
+          <span class="check-label">${f.emoji} ${key}</span>
+          <span class="check-sub">${f.sub}</span>
+        </span>
+      </label>
+    `).join('');
+  }
+
+  function toggleFuncao(key) {
+    const cb    = document.getElementById(`cb-${key}`);
+    const label = document.getElementById(`check-${key}`);
+    const dot   = document.getElementById(`dot-${key}`);
+    const f     = FUNCOES_CONFIG[key];
+    cb.checked  = !cb.checked;
+    if (cb.checked) {
+      label.classList.add('selecionada');
+      dot.style.background   = f.cor;
+      dot.style.borderColor  = f.cor;
+    } else {
+      label.classList.remove('selecionada');
+      dot.style.background   = f.cor + '22';
+      dot.style.borderColor  = f.borda;
+    }
+  }
+
+  function getFuncoesSelecionadas() {
+    return Object.keys(FUNCOES_CONFIG).filter(k => document.getElementById(`cb-${k}`)?.checked);
+  }
+
+  // ── Carregar admin ───────────────────────────────────────
+  async function carregarAdmin() {
+    try {
+      const r = await fetch('/api/me', { credentials:'include', headers: { 'Accept': 'application/json' } });
+      const d = await r.json();
+      if (!r.ok || !d.usuario.funcoes?.includes('ADMIN')) { window.location.href = '/'; return false; }
+      document.getElementById('adminNome').textContent = d.usuario.nome;
+      return true;
+    } catch { window.location.href = '/'; return false; }
+  }
+
+  // ── Carregar executores ──────────────────────────────────
+  async function carregarUsuarios() {
+    try {
+      const r = await fetch('/api/usuarios', { credentials:'include' });
+      const d = await r.json();
+      todosUsuarios = d.usuarios || [];
+      renderizarTabela(todosUsuarios);
+    } catch {
+      document.getElementById('carregando').textContent = 'Erro ao carregar executores.';
+    }
+  }
+
+  // ── Renderizar tabela ────────────────────────────────────
+  function renderizarTabela(lista) {
+    const corpo  = document.getElementById('corpoTabela');
+    const tabela = document.getElementById('tabelaUsuarios');
+    const vazio  = document.getElementById('estadoVazio');
+    const load   = document.getElementById('carregando');
+    document.getElementById('totalBadge').textContent = `${lista.length} usuário${lista.length!==1?'s':''}`;
+    load.style.display = 'none';
+
+    if (lista.length === 0) {
+      tabela.style.display = 'none';
+      vazio.style.display  = 'block';
+      return;
+    }
+    tabela.style.display = 'table';
+    vazio.style.display  = 'none';
+
+    corpo.innerHTML = lista.map(u => {
+      const funcoes = u.funcoes || [];
+      const badges  = funcoes.map(f => {
+        const cfg = FUNCOES_CONFIG[f] || {cor:'#6b82a0',bg:'rgba(107,130,160,.1)',borda:'rgba(107,130,160,.3)',emoji:'👤'};
+        return `<span class="badge-funcao" style="color:${cfg.cor};background:${cfg.bg};border-color:${cfg.borda}">
+          <span class="dot" style="background:${cfg.cor}"></span>${cfg.emoji} ${f}
+        </span>`;
+      }).join('');
+      const dt = new Date(u.criado_em).toLocaleDateString('pt-BR');
+      return `
+        <tr id="linha-${u.id}">
+          <td><div class="user-info">
+            <span class="user-nome">${u.nome}</span>
+            <span class="user-email">${u.email}</span>
+          </div></td>
+          <td><div class="funcoes-badges">${badges || '<span style="color:var(--muted);font-size:12px">—</span>'}</div></td>
+          <td><span class="badge-status ${u.ativo?'ativo':'inativo'}">${u.ativo?'● Ativo':'○ Inativo'}</span></td>
+          <td style="color:var(--muted);font-size:12px">${dt}</td>
+          <td><div class="acoes">
+            <button class="btn-acao ${u.ativo?'':'ativar'}" onclick="toggleStatus(${u.id},'${u.nome}')">
+              ${u.ativo?'Desativar':'Ativar'}
+            </button>
+            <button class="btn-acao" onclick="gerarConvite(${u.id},'${u.nome}')" title="Gerar código de primeiro acesso" style="background:rgba(43,127,255,.1);border-color:rgba(43,127,255,.25);color:#2b7fff;">
+              🎫 Código
+            </button>
+            <button class="btn-acao remover" onclick="confirmarRemover(${u.id},'${u.nome}')">Remover</button>
+          </div></td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ── Filtro busca ─────────────────────────────────────────
+  function filtrarTabela() {
+    const q = document.getElementById('busca').value.toLowerCase();
+    const f = todosUsuarios.filter(u =>
+      u.nome.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      (u.funcoes||[]).join(' ').toLowerCase().includes(q)
+    );
+    renderizarTabela(f);
+  }
+
+  // ── Toast ────────────────────────────────────────────────
+  function mostrarToast(msg, tipo='ok') {
+    const el = document.getElementById('toast');
+    el.textContent  = tipo==='ok' ? `✅  ${msg}` : `⚠️  ${msg}`;
+    el.className    = `toast ${tipo}`;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 4000);
+  }
+
+  // ── Toggle ativo ─────────────────────────────────────────
+  async function toggleStatus(id) {
+    try {
+      const r = await fetch(`/api/usuarios/${id}/toggle`, { method:'PATCH', credentials:'include' });
+      if (r.ok) {
+        const u = todosUsuarios.find(x => x.id === id);
+        if (u) u.ativo = !u.ativo;
+        filtrarTabela();
+      }
+    } catch {}
+  }
+
+  // ── Remover ──────────────────────────────────────────────
+  function confirmarRemover(id, nome) {
+    idParaRemover = id;
+    document.getElementById('modalTexto').textContent =
+      `Tem certeza que deseja remover "${nome}"? Esta ação não pode ser desfeita.`;
+    document.getElementById('modalRemover').classList.add('open');
+  }
+  function fecharModal() {
+    document.getElementById('modalRemover').classList.remove('open');
+    idParaRemover = null;
+  }
+  document.getElementById('btnConfirmar').addEventListener('click', async () => {
+    if (!idParaRemover) return;
+    try {
+      const r = await fetch(`/api/usuarios/${idParaRemover}`, { method:'DELETE', credentials:'include' });
+      fecharModal();
+      if (r.ok) {
+        todosUsuarios = todosUsuarios.filter(u => u.id !== idParaRemover);
+        filtrarTabela();
+      }
+    } catch {}
+  });
+  document.getElementById('modalRemover').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalRemover')) fecharModal();
+  });
+
+  // ── Abas ─────────────────────────────────────────────────
+  function mudarAba(nome, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('ativa'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('ativa'));
+    document.getElementById('tab-'+nome).classList.add('ativa');
+    btn.classList.add('ativa');
+    if (nome === 'executores') carregarSolExec();
+    if (nome === 'senhas')   carregarSolicitacoes();
+    if (nome === 'clientes') carregarClientes();
+    if (nome === 'logs')     carregarLogs();
+  }
+
+  // ── Badge pendentes ──────────────────────────────────────
+  async function atualizarBadgePendentes() {
+    try {
+      const r = await fetch('/api/senha/pendentes/contagem', { credentials:'include' });
+      const d = await r.json();
+      const total = d.total || 0;
+      ['badgePendente','badgeAba'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = total;
+        el.classList.toggle('visivel', total > 0);
+      });
+    } catch {}
+  }
+
+  // ── Solicitações de senha ────────────────────────────────
+  async function carregarSolicitacoes() {
+    const lista = document.getElementById('solLista');
+    const total = document.getElementById('totalSol');
+    lista.innerHTML = '<div class="sol-vazio"><div class="icone">🔄</div><p>Carregando...</p></div>';
+    try {
+      const r = await fetch('/api/senha/solicitacoes', { credentials:'include' });
+      const d = await r.json();
+      const sols = d.solicitacoes || [];
+      total.textContent = `${sols.length} solicitação${sols.length!==1?'ões':''}`;
+      if (sols.length === 0) {
+        lista.innerHTML = '<div class="sol-vazio"><div class="icone">✅</div><p>Nenhuma solicitação pendente.</p></div>';
+        return;
+      }
+      lista.innerHTML = sols.map(s => {
+        const funcoes   = s.funcoes || [s.funcao];
+        const cor       = FUNCOES_CONFIG[funcoes[0]]?.cor || '#6b82a0';
+        const data      = new Date(s.criado_em).toLocaleString('pt-BR');
+        const isPendente = s.status === 'PENDENTE';
+        const icone     = isPendente ? '🔑' : s.status === 'APROVADA' ? '✅' : '❌';
+        const funcoesTxt = funcoes.join(', ');
+        return `
+          <div class="sol-card ${s.status.toLowerCase()}" id="sol-${s.id}">
+            <div class="sol-avatar" style="background:${cor}22">${icone}</div>
+            <div class="sol-info">
+              <div class="sol-nome">${s.nome}</div>
+              <div class="sol-meta">
+                ${s.email} &nbsp;·&nbsp;
+                <span style="color:${cor};font-weight:600">${funcoesTxt}</span>
+                &nbsp;·&nbsp; ${data}
+              </div>
+            </div>
+            <span class="sol-status ${s.status.toLowerCase()}">${s.status}</span>
+            ${isPendente ? `
+              <div class="sol-acoes">
+                <input id="novaSenha-${s.id}" type="password"
+                  class="input-nova-senha" placeholder="Nova senha...">
+                <button class="btn-aprovar" onclick="aprovarSenha(${s.id},'${s.nome}')">✓ Aprovar</button>
+                <button class="btn-recusar" onclick="recusarSenha(${s.id},'${s.nome}')">✕ Recusar</button>
+              </div>` : ''}
+          </div>`;
+      }).join('');
+    } catch {
+      lista.innerHTML = '<div class="sol-vazio"><p>Erro ao carregar.</p></div>';
+    }
+  }
+
+  async function aprovarSenha(id, nome) {
+    const inp = document.getElementById(`novaSenha-${id}`);
+    const nov = inp.value.trim();
+    if (!nov || nov.length < 6) {
+      inp.style.borderColor = 'var(--red)'; inp.placeholder = 'Mín. 6 caracteres!';
+      setTimeout(() => { inp.style.borderColor=''; inp.placeholder='Nova senha...'; }, 1600);
+      return;
+    }
+    try {
+      const r = await fetch(`/api/senha/aprovar/${id}`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        credentials:'include', body:JSON.stringify({ nova_senha:nov })
+      });
+      const d = await r.json();
+      if (r.ok) {
+        const card = document.getElementById(`sol-${id}`);
+        card.classList.replace('pendente','aprovada');
+        card.querySelector('.sol-status').className   = 'sol-status aprovada';
+        card.querySelector('.sol-status').textContent = 'APROVADA';
+        card.querySelector('.sol-avatar').textContent = '✅';
+        card.querySelector('.sol-acoes').innerHTML =
+          `<span style="font-size:12.5px;color:var(--green)">✅ Nova senha: <strong>${nov}</strong> — gere o código de convite abaixo para o executor</span>`;
+        await atualizarBadgePendentes();
+        
+        // 🔔 ENVIA NOTIFICAÇÃO SSE PARA O EXECUTOR
+        if (d.usuario_id) {
+          await enviarNotifAlteracaoSenha(d.usuario_id, nome);
+        } else {
+          const u = (todosUsuarios||[]).find(x => x.nome === nome);
+          if (u) await enviarNotifAlteracaoSenha(u.id, nome);
+        }
+        
+        // Gera convite automaticamente para o executor receber a nova senha
+        if (d.usuario_id) {
+          gerarConvite(d.usuario_id, nome);
+        } else {
+          // Busca o id pelo nome na lista de usuários
+          const u = (todosUsuarios||[]).find(x => x.nome === nome);
+          if (u) gerarConvite(u.id, nome);
+        }
+      } else { alert(d.erro||'Erro ao aprovar.'); }
+    } catch { alert('Erro de conexão.'); }
+  }
+
+  // 🔔 Enviar notificação de alteração de senha para o executor
+  async function enviarNotifAlteracaoSenha(usuarioId, nome) {
+    try {
+      const r = await fetch('/api/notificacoes/enviar-teste', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        credentials:'include',
+        body: JSON.stringify({
+          usuario_id: usuarioId,
+          tipo: 'senha_alterada',
+          titulo: '🔑 Sua senha foi alterada',
+          mensagem: `Olá ${nome}! Sua senha de acesso foi redefinida pelo administrador. Acesse Primeiro Acesso com seu nome para ver a nova senha.`
+        })
+      });
+      if (r.ok) {
+        console.log('✅ Notificação de alteração de senha enviada para', nome);
+      }
+    } catch(err) {
+      console.error('Erro ao enviar notificação:', err);
+    }
+  }
+
+  async function recusarSenha(id, nome) {
+    if (!confirm(`Recusar a solicitação de "${nome}"?`)) return;
+    try {
+      const r = await fetch(`/api/senha/recusar/${id}`, { method:'POST', credentials:'include' });
+      const d = await r.json();
+      if (r.ok) {
+        const card = document.getElementById(`sol-${id}`);
+        card.classList.replace('pendente','recusada');
+        card.querySelector('.sol-status').className   = 'sol-status recusada';
+        card.querySelector('.sol-status').textContent = 'RECUSADA';
+        card.querySelector('.sol-avatar').textContent = '❌';
+        card.querySelector('.sol-acoes')?.remove();
+        await atualizarBadgePendentes();
+    atualizarBadgeClientes();
+    atualizarBadgeNotifAdmin();
+    setInterval(atualizarBadgeNotifAdmin, 30000);
+      } else { alert(d.erro||'Erro ao recusar.'); }
+    } catch { alert('Erro de conexão.'); }
+  }
+
+  // ── Logout ───────────────────────────────────────────────
+  async function logout() {
+    await fetch('/api/logout', { method:'POST', credentials:'include' });
+    window.location.href = '/';
+  }
+
+  document.addEventListener('keydown', e => { if (e.key==='Escape') fecharModal(); });
+
+  // ── Init ─────────────────────────────────────────────────
+  (async () => {
+    const ok = await carregarAdmin(); // aguarda autenticação antes de carregar dados
+    if (!ok) return;                  // se não é ADMIN, carregarAdmin já redirecionou
+    carregarUsuarios();
+    carregarSolExec();
+    atualizarBadgePendentes();
+    atualizarBadgeClientes();
+    atualizarBadgeNotifAdmin();
+    atualizarBadgeSolExec();
+    setInterval(atualizarBadgeNotifAdmin, 30000);
+    setInterval(atualizarBadgePendentes, 30000);
+  })();
+  setInterval(atualizarBadgeSolExec, 30000);
+
+  // ── SOLICITAÇÕES DE EXECUTORES ───────────────────────────
+  let _filtroSolExec = '';
+
+  async function carregarSolExec(filtro) {
+    if (filtro !== undefined) _filtroSolExec = filtro;
+    const container = document.getElementById('listaSolExec');
+    container.innerHTML = '<p style="color:#3a5070;font-size:13px;">Carregando...</p>';
+    try {
+      const url = _filtroSolExec
+        ? `/api/solicitacoes-executor?status=${_filtroSolExec}`
+        : '/api/solicitacoes-executor';
+      const r = await fetch(url, { credentials:'include' });
+      const d = await r.json();
+      const lista = d.solicitacoes || [];
+      if (!lista.length) {
+        container.innerHTML = '<p style="color:#3a5070;font-size:13px;">Nenhuma solicitação encontrada.</p>';
+        return;
+      }
+      const FUNCOES_CORES = {
+        FORECAST:'#2b7fff', PMP:'#8b5cf6', MRP:'#06b6d4',
+        ESTOQUE:'#22c55e', CRP:'#f59e0b', DASHBOARD:'#f43f5e'
+      };
+      container.innerHTML = lista.map(s => {
+        const sColor = s.status==='APROVADO' ? '#22c55e' : s.status==='RECUSADO' ? '#f43f5e' : '#f59e0b';
+        const sLabel = s.status==='APROVADO' ? '✅ Aprovado' : s.status==='RECUSADO' ? '❌ Recusado' : '⏳ Pendente';
+        const isPendente = s.status === 'PENDENTE';
+        const funcoesBadges = (s.funcoes||[]).map(f =>
+          `<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;
+            background:${FUNCOES_CORES[f]||'#6b82a0'}22;color:${FUNCOES_CORES[f]||'#6b82a0'};
+            border:1px solid ${FUNCOES_CORES[f]||'#6b82a0'}44;">${f}</span>`
+        ).join('');
+        return `
+        <div style="background:#080d14;border:1px solid #1a2740;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#1a5ccc,#2b7fff);
+              display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;">
+              ${s.nome.charAt(0).toUpperCase()}
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:600;">${s.nome}</div>
+              <div style="font-size:12px;color:#6b82a0;">${s.email}</div>
+              <div style="font-size:11px;color:#3a5070;margin-top:2px;">
+                Solicitação em ${new Date(s.criado_em).toLocaleDateString('pt-BR')}
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">${funcoesBadges}</div>
+            </div>
+            <span style="font-size:12px;font-weight:600;color:${sColor};
+              background:${sColor}22;border:1px solid ${sColor}44;
+              padding:3px 12px;border-radius:6px;white-space:nowrap;">${sLabel}</span>
+          </div>
+          ${isPendente ? `
+          <div style="display:flex;gap:8px;align-items:center;padding-top:8px;border-top:1px solid #1a2740;">
+            <button onclick="aprovarSolExec(${s.id},'${s.nome.replace(/'/g,"\\'")}','${s.email}')"
+              style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#22c55e;
+                padding:8px 20px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;
+                font-family:'Poppins',sans-serif;white-space:nowrap;">✔ Aprovar</button>
+            <button onclick="recusarSolExec(${s.id},'${s.nome.replace(/'/g,"\\'")}' )"
+              style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.2);color:#f43f5e;
+                padding:8px 16px;border-radius:7px;font-size:12px;cursor:pointer;
+                font-family:'Poppins',sans-serif;white-space:nowrap;">✕ Recusar</button>
+          </div>` : `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px;border-top:1px solid #1a2740;">
+            <span style="font-size:11px;color:#3a5070;">
+              ${s.resolvido_em ? 'Resolvido em ' + new Date(s.resolvido_em).toLocaleDateString('pt-BR') : ''}
+            </span>
+            <button onclick="removerSolExec(${s.id},'${s.nome.replace(/'/g,"\\'")}')"
+              style="background:none;border:1px solid #1a2740;color:#3a5070;padding:5px 12px;
+                border-radius:6px;font-size:11px;cursor:pointer;font-family:'Poppins',sans-serif;
+                transition:.2s;" onmouseover="this.style.borderColor='#f43f5e';this.style.color='#f43f5e'"
+                onmouseout="this.style.borderColor='#1a2740';this.style.color='#3a5070'">🗑 Remover</button>
+          </div>`}
+        </div>`;
+      }).join('');
+    } catch(e) {
+      container.innerHTML = '<p style="color:#f43f5e;font-size:13px;">Erro ao carregar solicitações.</p>';
+    }
+  }
+
+  async function aprovarSolExec(id, nome, email) {
+    if (!confirm(`Aprovar a solicitação de "${nome}"?\n\nIsso criará a conta de executor com a senha escolhida pelo colaborador.`)) return;
+    try {
+      const r = await fetch(`/api/solicitacoes-executor/${id}/aprovar`, {
+        method:'POST', credentials:'include'
+      });
+      const d = await r.json();
+      if (r.ok) {
+        mostrarToast(`✅ Conta de ${nome} criada! E-mail: ${email}`, 'ok');
+        carregarSolExec();
+        carregarUsuarios();
+        atualizarBadgeSolExec();
+      } else {
+        mostrarToast(d.erro || 'Erro ao aprovar.', 'err');
+      }
+    } catch { mostrarToast('Erro ao aprovar.', 'err'); }
+  }
+
+  async function recusarSolExec(id, nome) {
+    if (!confirm(`Recusar a solicitação de "${nome}"?`)) return;
+    try {
+      const r = await fetch(`/api/solicitacoes-executor/${id}/recusar`, {
+        method:'POST', credentials:'include'
+      });
+      const d = await r.json();
+      mostrarToast(d.mensagem || d.erro, r.ok ? 'ok' : 'err');
+      if (r.ok) { carregarSolExec(); atualizarBadgeSolExec(); }
+    } catch { mostrarToast('Erro ao recusar.', 'err'); }
+  }
+
+  async function removerSolExec(id, nome) {
+    if (!confirm(`Remover o registro de "${nome}" permanentemente?`)) return;
+    try {
+      const r = await fetch(`/api/solicitacoes-executor/${id}`, { method:'DELETE', credentials:'include' });
+      const d = await r.json();
+      if (r.ok) { mostrarToast(`Registro de ${nome} removido.`, 'ok'); carregarSolExec(); }
+      else mostrarToast(d.erro || 'Erro ao remover.', 'err');
+    } catch { mostrarToast('Erro ao remover.', 'err'); }
+  }
+
+  async function atualizarBadgeSolExec() {
+    try {
+      const r = await fetch('/api/solicitacoes-executor/pendentes/contagem', { credentials:'include' });
+      const d = await r.json();
+      const total = d.total || 0;
+      ['badgeSolExec','badgeSolExecSub'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.textContent = total; el.style.display = total > 0 ? 'inline-flex' : 'none'; }
+      });
+    } catch {}
+  }
+
+  function filtrarSolExec(status) {
+    _filtroSolExec = status;
+    ['sfTodos','sfPendente','sfAprovado','sfRecusado'].forEach(id => {
+      document.getElementById(id)?.classList.remove('ativa');
+    });
+    const map = {'':'sfTodos','PENDENTE':'sfPendente','APROVADO':'sfAprovado','RECUSADO':'sfRecusado'};
+    document.getElementById(map[status])?.classList.add('ativa');
+    carregarSolExec(status);
+  }
+
+  // ── ABA CLIENTES ─────────────────────────────────────────
+  async function carregarClientes(filtro) {
+    if (filtro !== undefined) _filtroAtual = filtro;
+    const container = document.getElementById('listaClientes');
+    container.innerHTML = '<p style="color:#3a5070;font-size:13px;">Carregando...</p>';
+    try {
+      const url = _filtroAtual ? `/api/clientes?status=${_filtroAtual}` : '/api/clientes';
+      const r = await fetch(url, { credentials:'include' });
+      const d = await r.json();
+      const clientes = d.clientes || [];
+      if (!clientes.length) {
+        container.innerHTML = '<p style="color:#3a5070;font-size:13px;">Nenhuma solicitação de cliente ainda.</p>';
+        return;
+      }
+      container.innerHTML = clientes.map(c => {
+        const sColor = c.status==='APROVADO' ? '#22c55e' : c.status==='RECUSADO' ? '#f43f5e' : '#f59e0b';
+        const sLabel = c.status==='APROVADO' ? 'Aprovado' : c.status==='RECUSADO' ? 'Recusado' : '⏳ Pendente';
+        const isPendente = c.status === 'PENDENTE';
+        const msgInteresse = c.mensagem_interesse ? `<div style="font-size:11px;color:#3a5070;margin-top:4px;font-style:italic;">"${c.mensagem_interesse}"</div>` : '';
+        return `
+        <div style="background:#080d14;border:1px solid #1a2740;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#0e7490,#06b6d4);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;">${c.nome.charAt(0).toUpperCase()}</div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:600;">${c.nome}</div>
+              <div style="font-size:12px;color:#6b82a0;">${c.email}${c.empresa ? ' · '+c.empresa : ''}${c.telefone ? ' · '+c.telefone : ''}</div>
+              <div style="font-size:11px;color:#3a5070;">Solicitação em ${new Date(c.criado_em).toLocaleDateString('pt-BR')}</div>
+              ${msgInteresse}
+            </div>
+            <span style="font-size:12px;font-weight:600;color:${sColor};background:${sColor}22;border:1px solid ${sColor}44;padding:3px 12px;border-radius:6px;white-space:nowrap;">${sLabel}</span>
+          </div>
+          ${isPendente ? `
+          <div style="display:flex;gap:8px;align-items:center;padding-top:4px;border-top:1px solid #1a2740;">
+            <input type="password" id="senhaCliente${c.id}" placeholder="Definir senha de acesso (mín. 6 car.)"
+              style="flex:1;background:#0d1520;border:1px solid #1a2740;border-radius:7px;color:#e8edf5;font-family:'Poppins',sans-serif;font-size:13px;padding:8px 12px;outline:none;">
+            <button onclick="aprovarCliente(${c.id})" style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#22c55e;padding:8px 16px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;white-space:nowrap;">✔ Aprovar</button>
+            <button onclick="recusarCliente(${c.id})" style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.2);color:#f43f5e;padding:8px 14px;border-radius:7px;font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif;white-space:nowrap;">✕ Recusar</button>
+          </div>` : `
+          <div style="display:flex;justify-content:flex-end;padding-top:4px;border-top:1px solid #1a2740;">
+            <button onclick="removerCliente(${c.id})" style="background:none;border:1px solid #1a2740;color:#3a5070;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif;">Remover</button>
+          </div>`}
+        </div>`;
+      }).join('');
+    } catch(e) {
+      container.innerHTML = '<p style="color:#f43f5e;font-size:13px;">Erro ao carregar clientes.</p>';
+    }
+  }
+
+  async function aprovarCliente(id) {
+    const senhaInput = document.getElementById('senhaCliente'+id);
+    const senha = senhaInput ? senhaInput.value.trim() : '';
+    if (!senha || senha.length < 6) {
+      senhaInput && (senhaInput.style.borderColor='#f43f5e');
+      mostrarToast('Defina uma senha de acesso (mín. 6 caracteres).','err');
+      return;
+    }
+    try {
+      const r = await fetch(`/api/clientes/aprovar/${id}`, {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({senha})
+      });
+      const d = await r.json();
+      if (r.ok) {
+        mostrarToast(`✅ ${d.mensagem} | E-mail: ${d.email} | Senha definida: ${senha}`, 'ok');
+        carregarClientes(); atualizarBadgeClientes();
+    atualizarBadgeNotifAdmin();
+    setInterval(atualizarBadgeNotifAdmin, 30000);
+      } else {
+        mostrarToast(d.erro||'Erro ao aprovar.','err');
+      }
+    } catch { mostrarToast('Erro ao aprovar.','err'); }
+  }
+
+  async function recusarCliente(id) {
+    if (!confirm('Recusar esta solicitação?')) return;
+    try {
+      const r = await fetch(`/api/clientes/recusar/${id}`, { method:'POST', credentials:'include' });
+      const d = await r.json();
+      mostrarToast(d.mensagem||d.erro, r.ok?'ok':'err');
+      if (r.ok) { carregarClientes(); atualizarBadgeClientes();
+    atualizarBadgeNotifAdmin();
+    setInterval(atualizarBadgeNotifAdmin, 30000); }
+    } catch { mostrarToast('Erro ao recusar.','err'); }
+  }
+
+  async function removerCliente(id) {
+    if (!confirm('Remover este cliente permanentemente?')) return;
+    try {
+      const r = await fetch(`/api/clientes/${id}`, { method:'DELETE', credentials:'include' });
+      const d = await r.json();
+      mostrarToast(d.mensagem||d.erro, r.ok?'ok':'err');
+      if (r.ok) carregarClientes();
+    } catch { mostrarToast('Erro ao remover.','err'); }
+  }
+
+  async function atualizarBadgeClientes() {
+    try {
+      const r = await fetch('/api/clientes/pendentes/contagem', { credentials:'include' });
+      const d = await r.json();
+      const total = d.total || 0;
+      const badge = document.getElementById('badgeClientes');
+      if (badge) {
+        badge.textContent = total;
+        badge.style.display = total > 0 ? 'inline-flex' : 'none';
+      }
+    } catch {}
+  }
+
+
+  // ── Filtro clientes ──────────────────────────────────────
+  let _filtroAtual = '';
+  function filtrarClientes(status) {
+    _filtroAtual = status;
+    ['fTodos','fPendente','fAprovado','fRecusado'].forEach(id => {
+      document.getElementById(id)?.classList.remove('ativa');
+    });
+    const map = {'':'fTodos','PENDENTE':'fPendente','APROVADO':'fAprovado','RECUSADO':'fRecusado'};
+    document.getElementById(map[status])?.classList.add('ativa');
+    carregarClientes(status);
+  }
+
+  // ── Logs de ações ────────────────────────────────────────
+  async function carregarLogs() {
+    const container = document.getElementById('listaLogs');
+    container.innerHTML = '<p style="color:#3a5070;font-size:13px;">Carregando...</p>';
+    try {
+      const r = await fetch('/api/clientes/logs', { credentials:'include' });
+      const d = await r.json();
+      const logs = d.logs || [];
+      if (!logs.length) {
+        container.innerHTML = '<p style="color:#3a5070;font-size:13px;">Nenhuma ação registrada ainda.</p>';
+        return;
+      }
+      const icones = {
+        'CRIAR_EXECUTOR':'👤','REMOVER_EXECUTOR':'🗑️','ATIVAR_EXECUTOR':'✅','DESATIVAR_EXECUTOR':'⏸️',
+        'APROVAR_CLIENTE':'✅','RECUSAR_CLIENTE':'❌','REMOVER_CLIENTE':'🗑️',
+        'REDEFINIR_SENHA':'🔑','RECUSAR_SENHA':'❌',
+      };
+      container.innerHTML = logs.map(l => {
+        const icone = icones[l.acao] || '📋';
+        const tempo = new Date(l.criado_em).toLocaleString('pt-BR');
+        return `<div style="background:#080d14;border:1px solid #1a2740;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px;">
+          <span style="font-size:18px;">${icone}</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:600;">${l.detalhes||l.acao}</div>
+            <div style="font-size:11px;color:#3a5070;">por <strong style="color:#6b82a0;">${l.admin_nome||'Admin'}</strong> · ${tempo}</div>
+          </div>
+        </div>`;
+      }).join('');
+    } catch {
+      container.innerHTML = '<p style="color:#f43f5e;font-size:13px;">Erro ao carregar logs.</p>';
+    }
+  }
+
+
+  // ── LOGS ─────────────────────────────────────────────────
+
+
+  // ── NOTIFICAÇÕES ADMIN ────────────────────────────────────
+  async function carregarNotifAdmin() {
+    const c = document.getElementById('notifPainelLista');
+    if (!c) return;
+    c.innerHTML = '<p style="color:#3a5070;font-size:13px;padding:12px;">Carregando...</p>';
+    try {
+      const r = await fetch('/api/notificacoes', { credentials:'include' });
+      const d = await r.json();
+      const lista = d.notificacoes || [];
+      const naoLidas = lista.filter(n=>!n.lida).length;
+      const badge = document.getElementById('badgeNotifAdmin');
+      if (badge) { badge.textContent=naoLidas; badge.style.display=naoLidas>0?'inline-flex':'none'; }
+      if (!lista.length) { c.innerHTML='<div class="notif-painel-vazio">Nenhuma notificação</div>'; return; }
+      c.innerHTML = lista.map(n => `
+        <div style="background:#080d14;border:1px solid #1a2740;border-radius:10px;padding:14px 18px;display:flex;gap:12px;margin-bottom:8px;${!n.lida?'border-left:3px solid #2b7fff;':''}">
+          <div style="width:8px;height:8px;border-radius:50%;background:${n.lida?'#1a2740':'#2b7fff'};flex-shrink:0;margin-top:5px;"></div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:${n.lida?'400':'600'};">${n.titulo}</div>
+            ${n.mensagem?`<div style="font-size:12px;color:#6b82a0;margin-top:3px;">${n.mensagem}</div>`:''}
+            <div style="font-size:11px;color:#3a5070;margin-top:4px;">${new Date(n.criado_em).toLocaleString('pt-BR')}</div>
+          </div>
+        </div>`).join('');
+    } catch { c.innerHTML='<p style="color:#f43f5e;font-size:13px;padding:12px;">Erro ao carregar.</p>'; }
+  }
+
+  async function marcarTodasLidasAdmin() {
+    try {
+      await fetch('/api/notificacoes/marcar-lidas', { method:'POST', credentials:'include' });
+      carregarNotifAdmin();
+    } catch {}
+  }
+
+  async function limparTodasNotifAdmin() {
+    if (!confirm('Apagar todas as notificações? Esta ação não pode ser desfeita.')) return;
+    try {
+      const r = await fetch('/api/notificacoes/todas', { method:'DELETE', credentials:'include' });
+      if (r.ok) {
+        document.getElementById('notifPainelLista').innerHTML =
+          '<div class="notif-painel-vazio">Nenhuma notificação</div>';
+        const badge = document.getElementById('notifBadge');
+        if (badge) { badge.textContent = '0'; badge.classList.remove('visivel'); }
+        mostrarToast('Notificações apagadas.', 'ok');
+      }
+    } catch { mostrarToast('Erro ao apagar notificações.', 'err'); }
+  }
+
+  // Atualiza badge de notificações admin a cada 30s
+
+
+  // ── Gerar código de convite ──────────────────────────────
+  async function gerarConvite(usuarioId, nomeUsuario) {
+    try {
+      const r = await fetch('/api/convites/gerar', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ usuario_id: usuarioId })
+      });
+      const d = await r.json();
+      if (!r.ok) { mostrarToast(d.erro || 'Erro ao gerar convite.', 'err'); return; }
+
+      // Mostra o modal
+      document.getElementById('conviteNome').textContent   = nomeUsuario || d.usuario?.nome || '';
+      document.getElementById('conviteCodigo').textContent = d.codigo;
+      const link = `${window.location.origin}/primeiro-acesso.html?codigo=${d.codigo}`;
+      document.getElementById('conviteLink').textContent   = link;
+      document.getElementById('conviteOverlay').style.display = 'flex';
+    } catch(e) {
+      mostrarToast('Erro ao gerar convite.', 'err');
+    }
+  }
+
+  function fecharConvite() {
+    document.getElementById('conviteOverlay').style.display = 'none';
+  }
+
+  function copiarConvite() {
+    const cod = document.getElementById('conviteCodigo').textContent;
+    navigator.clipboard.writeText(cod).then(() => mostrarToast('Código copiado!', 'ok'));
+  }
+
+  function copiarLinkConvite() {
+    const link = document.getElementById('conviteLink').textContent;
+    navigator.clipboard.writeText(link).then(() => mostrarToast('Link copiado!', 'ok'));
+  }
+
+
+  // ── Modal convite ─────────────────────────────────────────
+  function mostrarModalConvite(codigo, email, senha, msg) {
+    document.getElementById('convCodigo').textContent = codigo;
+    document.getElementById('convEmail').textContent  = email || '—';
+    document.getElementById('convSenha').textContent  = senha || '—';
+    document.getElementById('modalConvite').style.display = 'flex';
+    carregarUsuarios(); // atualiza a lista
+  }
+  function fecharModalConvite() {
+    document.getElementById('modalConvite').style.display = 'none';
+  }
+  function copiarConvite() {
+    const codigo = document.getElementById('convCodigo').textContent;
+    navigator.clipboard.writeText(codigo).then(() => {
+      const btn = document.querySelector('.conv-copy');
+      btn.textContent = '✔ Copiado!';
+      setTimeout(() => btn.textContent = 'Copiar', 1500);
+    });
+  }
+
+
+  // ── Modal credenciais executor ────────────────────────────
+  function mostrarModalCredenciais(d) {
+    document.getElementById('mcredTitle').textContent  = `✅ ${d.nome} criado!`;
+    document.getElementById('mcredNome').textContent   = d.nome  || '—';
+    document.getElementById('mcredEmail').textContent  = d.email || '—';
+    document.getElementById('mcredSenha').textContent  = d.senha || '—';
+    const fc = document.getElementById('mcredFuncoes');
+    fc.innerHTML = (d.funcoes||[]).map(f =>
+      `<span style="padding:3px 10px;border-radius:5px;font-size:11px;font-weight:700;
+        background:rgba(43,127,255,.12);color:#2b7fff;border:1px solid rgba(43,127,255,.2);">${f}</span>`
+    ).join('');
+    document.getElementById('modalCredExecutor').style.display = 'flex';
+    carregarUsuarios();
+  }
+  function fecharModalCredExecutor() {
+    document.getElementById('modalCredExecutor').style.display = 'none';
+  }
+  function mcredCopiar(id) {
+    const texto = document.getElementById(id).textContent;
+    navigator.clipboard.writeText(texto).then(() => {
+      const btn = event.target;
+      const orig = btn.textContent;
+      btn.textContent = '✔';
+      btn.style.color = '#22c55e';
+      setTimeout(() => { btn.textContent = orig; btn.style.color=''; }, 1500);
+    });
+  }
+
+  // ── Conexão SSE para notificações em tempo real ────────────
+  function conectarSSE() {
+    const eventSource = new EventSource('/api/notificacoes/stream', { withCredentials: true });
+    
+    eventSource.addEventListener('message', (e) => {
+      try {
+        const notif = JSON.parse(e.data);
+        console.log('📨 Nova notificação em tempo real:', notif);
+        
+        // 🔔 ADICIONA À LISTA DO PAINEL
+        adicionarNotifAoPainel(notif);
+        
+        // Atualiza badge
+        atualizarBadgeNotifAdmin();
+        
+        // Se desejar, também recarrega alguma lista
+        const modal = document.getElementById('modalSenhas');
+        if (modal && modal.style.display !== 'none') {
+          // Recarrega a lista de solicitações de senha
+          listarSolicitacoesSenha();
+        }
+      } catch(err) {
+        console.error('Erro ao processar notificação SSE:', err);
+      }
+    });
+    
+    eventSource.addEventListener('error', (e) => {
+      console.error('Erro na conexão SSE:', e);
+      eventSource.close();
+      // Reconecta após 5 segundos
+      setTimeout(conectarSSE, 5000);
+    });
+    
+    console.log('✅ Conectado ao stream de notificações em tempo real');
+  }
+
+  // ── Funções para o painel de notificações ───────────────
+  function abrirPainelNotif() {
+    document.getElementById('notifPainel').classList.add('ativo');
+  }
+
+  function fecharPainelNotif() {
+    document.getElementById('notifPainel').classList.remove('ativo');
+  }
+
+  function adicionarNotifAoPainel(notif) {
+    const lista = document.getElementById('notifPainelLista');
+    
+    // Se estava vazio, remove mensagem
+    if (lista.innerHTML.includes('Nenhuma notificação')) {
+      lista.innerHTML = '';
+    }
+
+    // Cria item de notificação
+    const item = document.createElement('div');
+    item.className = 'notif-painel-item nao-lida';
+    item.innerHTML = `
+      <div class="notif-painel-dot"></div>
+      <div class="notif-painel-body">
+        <div class="notif-painel-titulo">${notif.titulo || 'Notificação'}</div>
+        <div class="notif-painel-msg">${notif.mensagem || ''}</div>
+        <div class="notif-painel-tempo">agora</div>
+      </div>
+    `;
+    
+    // Adiciona no topo
+    lista.insertBefore(item, lista.firstChild);
+  }
+
+  async function atualizarBadgeNotifAdmin() {
+    try {
+      const r = await fetch('/api/notificacoes/nao-lidas/contagem', { credentials:'include' });
+      const d = await r.json();
+      const total = d.total || 0;
+      const badge = document.getElementById('notifBadge');
+      if (badge) {
+        badge.textContent = total;
+        badge.classList.toggle('visivel', total > 0);
+      }
+    } catch {}
+  }
+
+  // Conecta ao SSE ao carregar a página
+  conectarSSE();
+
+</script>
+
+<!-- Modal de código de convite -->
+<div class="convite-overlay" id="conviteOverlay" style="display:none">
+  <div class="convite-box">
+    <div style="font-size:44px">🎫</div>
+    <h3>Código de Convite Gerado!</h3>
+    <p>Repasse este código ao executor <strong id="conviteNome"></strong>. Ele deve acessar <strong>/primeiro-acesso</strong> e digitá-lo para ver suas credenciais.</p>
+    <div class="convite-codigo" id="conviteCodigo">FP-XXXXXX</div>
+    <div class="convite-link" id="conviteLink"></div>
+    <div class="convite-info">⚠️ Este código é de uso único. Após ser utilizado, não poderá ser reutilizado. Gere um novo se necessário.</div>
+    <div style="display:flex;gap:10px;width:100%;">
+      <button class="btn-copy-convite" style="flex:1" onclick="copiarConvite()">📋 Copiar código</button>
+      <button class="btn-copy-convite" style="flex:1" onclick="copiarLinkConvite()">🔗 Copiar link</button>
+    </div>
+    <button class="btn-fechar-convite" onclick="fecharConvite()">Entendido, fechar</button>
+  </div>
+</div>
+
+
+<!-- Modal credenciais do executor -->
+<div class="mcred-overlay" id="modalCredExecutor" style="display:none">
+  <div class="mcred-box">
+    <div class="mcred-icon">🎉</div>
+    <div class="mcred-title" id="mcredTitle">Executor criado!</div>
+    <p class="mcred-sub">Repasse as credenciais abaixo ao colaborador. Ele acessa a página indicada para verificar seu acesso.</p>
+
+    <div class="mcred-dados">
+      <div class="mcred-row">
+        <span class="mcred-label">Nome:</span>
+        <span class="mcred-val" id="mcredNome">—</span>
+      </div>
+      <div class="mcred-row">
+        <span class="mcred-label">E-mail:</span>
+        <span class="mcred-val" id="mcredEmail">—</span>
+        <button class="mcred-copy" onclick="mcredCopiar('mcredEmail')">Copiar</button>
+      </div>
+      <div class="mcred-row">
+        <span class="mcred-label">Senha:</span>
+        <span class="mcred-val" id="mcredSenha">—</span>
+        <button class="mcred-copy" onclick="mcredCopiar('mcredSenha')">Copiar</button>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Módulos:</div>
+        <div id="mcredFuncoes" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+      </div>
+    </div>
+
+    <div class="mcred-aviso">
+      ⚠️ Informe ao colaborador que ele deve acessar a página abaixo para verificar sua conta pelo nome:
+    </div>
+    <div class="mcred-link">/colaborador</div>
+
+    <button class="mcred-btn" onclick="fecharModalCredExecutor()">Entendido ✔</button>
+  </div>
+</div>
+
+</body>
+</html>

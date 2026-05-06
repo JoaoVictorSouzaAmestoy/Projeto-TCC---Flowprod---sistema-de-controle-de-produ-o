@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlowProd — Acesso Colaborador</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#080d14; --surface:#0d1520; --border:#1a2740;
+    --text:#e8edf5; --muted:#6b82a0; --dim:#3a5070;
+    --blue:#2b7fff; --blue-dk:#1a5ccc; --green:#22c55e; --error:#f43f5e;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    background:var(--bg); color:var(--text); font-family:'Poppins',sans-serif;
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px;
+  }
+  .back-link {
+    position:fixed; top:20px; left:24px;
+    color:var(--muted); font-size:13px; text-decoration:none;
+    display:flex; align-items:center; gap:6px; transition:.2s;
+  }
+  .back-link:hover { color:var(--blue); }
+
+  .card {
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:44px 40px; width:100%; max-width:400px;
+    display:flex; flex-direction:column; gap:20px;
+  }
+  .card-header { text-align:center; display:flex; flex-direction:column; gap:8px; }
+  .logo { font-size:22px; font-weight:700; color:var(--blue); letter-spacing:1px; }
+  .badge {
+    display:inline-block; padding:4px 14px; border-radius:6px;
+    font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+    background:rgba(43,127,255,.12); color:var(--blue); border:1px solid rgba(43,127,255,.2);
+    margin:0 auto;
+  }
+  h2 { font-size:22px; font-weight:700; }
+  .sub { color:var(--muted); font-size:13px; }
+
+  .form-group { display:flex; flex-direction:column; gap:6px; }
+  label { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.7px; }
+  input {
+    background:var(--bg); border:1px solid var(--border); border-radius:8px;
+    color:var(--text); font-family:'Poppins',sans-serif; font-size:14px;
+    padding:11px 14px; transition:.2s; outline:none; width:100%;
+  }
+  input:focus { border-color:var(--blue); }
+  .pass-wrap { position:relative; }
+  .pass-wrap input { padding-right:42px; }
+  .eye-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; color:var(--muted); }
+
+  .forgot { background:none; border:none; color:var(--muted); cursor:pointer; font-family:'Poppins',sans-serif; font-size:12px; text-align:left; padding:0; transition:.2s; }
+  .forgot:hover { color:var(--blue); }
+
+  .btn-submit {
+    background:linear-gradient(135deg,var(--blue-dk),var(--blue)); border:none; border-radius:8px;
+    color:#fff; cursor:pointer; font-family:'Poppins',sans-serif; font-size:14px; font-weight:600;
+    padding:13px; width:100%; transition:.2s; display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-submit:hover { opacity:.9; }
+  .btn-submit:disabled { opacity:.5; cursor:not-allowed; }
+  .spinner { width:15px; height:15px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; display:none; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .msg { border-radius:8px; font-size:13px; padding:10px 14px; text-align:center; display:none; }
+  .msg.err { background:rgba(244,63,94,.1); border:1px solid rgba(244,63,94,.25); color:var(--error); }
+  .msg.ok  { background:rgba(34,197,94,.1);  border:1px solid rgba(34,197,94,.25);  color:var(--green); }
+  .msg.inf { background:rgba(43,127,255,.1); border:1px solid rgba(43,127,255,.2);  color:var(--blue); }
+
+  .divider { display:flex; align-items:center; gap:10px; color:var(--dim); font-size:12px; }
+  .divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  .client-link { text-align:center; font-size:13px; color:var(--dim); }
+  .client-link a { color:var(--blue); text-decoration:none; font-weight:500; }
+  .client-link a:hover { text-decoration:underline; }
+
+  /* Modal senha */
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.75); display:flex; align-items:center; justify-content:center; z-index:100; padding:16px; }
+  .modal-box { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:36px 32px; width:100%; max-width:360px; display:flex; flex-direction:column; gap:16px; }
+  .modal-box h3 { font-size:18px; font-weight:700; }
+  .modal-box p  { color:var(--muted); font-size:13px; line-height:1.6; }
+  .modal-footer { display:flex; gap:10px; }
+  .btn-sec { flex:1; padding:10px; border-radius:8px; border:1px solid var(--border); background:none; color:var(--muted); cursor:pointer; font-family:'Poppins',sans-serif; font-size:13px; transition:.2s; }
+  .btn-sec:hover { border-color:var(--blue); color:var(--blue); }
+  .btn-pri { flex:1; padding:10px; border-radius:8px; border:none; background:var(--blue); color:#fff; cursor:pointer; font-family:'Poppins',sans-serif; font-size:13px; font-weight:600; transition:.2s; }
+  .btn-pri:hover { background:var(--blue-dk); }
+  .btn-pri:disabled { opacity:.5; cursor:not-allowed; }
+
+  /* Modal módulos */
+  .modulo-overlay { position:fixed; inset:0; background:rgba(0,0,0,.8); display:flex; align-items:center; justify-content:center; z-index:200; padding:16px; }
+  .modulo-box { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:36px 28px; width:100%; max-width:400px; display:flex; flex-direction:column; gap:12px; text-align:center; }
+  .modulo-box h2 { font-size:19px; font-weight:700; }
+  .modulo-box .sub { color:var(--muted); font-size:13px; }
+  .modulo-btn { display:flex; align-items:center; gap:14px; text-align:left; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:13px 16px; cursor:pointer; transition:.2s; text-decoration:none; color:var(--text); }
+  .modulo-btn:hover { border-color:var(--blue); }
+  .m-icon { font-size:22px; }
+  .m-nome { font-size:14px; font-weight:600; }
+  .m-desc { font-size:12px; color:var(--dim); }
+  .m-arrow { margin-left:auto; color:var(--dim); }
+
+
+</style>
+</head>
+<body>
+
+
+<a href="/" class="back-link">← Início</a>
+
+<div class="card">
+  <div class="card-header">
+    <span class="logo">FlowProd</span>
+    <span class="badge">🏭 Colaborador</span>
+    <h2>Acesso ao Sistema</h2>
+    <p class="sub">Área exclusiva para colaboradores cadastrados pelo administrador.</p>
+  </div>
+
+  <div class="form-group">
+    <label>E-mail</label>
+    <input type="email" id="email" placeholder="seu@email.com" autocomplete="username">
+  </div>
+
+  <div class="form-group">
+    <label>Senha</label>
+    <div class="pass-wrap">
+      <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password">
+      <button type="button" class="eye-btn" onclick="toggleSenha()">👁</button>
+    </div>
+  </div>
+
+  <button class="forgot" id="forgotBtn">Esqueceu a senha?</button>
+
+  <div class="msg" id="msg"></div>
+
+  <button class="btn-submit" id="btnLogin" onclick="fazerLogin()">
+    <span id="btnText">Entrar no Sistema</span>
+    <div class="spinner" id="spinner"></div>
+  </button>
+
+  <div class="divider">ou</div>
+
+  <div class="client-link">
+    É cliente? <a href="/cliente.html">Acesse a área do cliente →</a>
+  </div>
+  <div class="client-link" style="margin-top:-8px;">
+    Novo colaborador? <a href="/solicitar-acesso.html">Solicitar acesso →</a>
+  </div>
+</div>
+
+<!-- Modal senha -->
+<div class="overlay" id="modalSenha" style="display:none">
+  <div class="modal-box">
+    <div style="font-size:36px;text-align:center">🔑</div>
+    <h3>Redefinir Senha</h3>
+    <p>Informe seu e-mail. O administrador receberá a solicitação e definirá uma nova senha.</p>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" id="resetEmail" placeholder="seu@email.com">
+    </div>
+    <div class="msg" id="resetMsg"></div>
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-pri" id="resetBtn" onclick="enviarReset()">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal módulos -->
+<div class="modulo-overlay" id="moduloOverlay" style="display:none">
+  <div class="modulo-box">
+    <div style="font-size:44px">🗂️</div>
+    <h2>Selecione o Módulo</h2>
+    <p class="sub" id="moduloSub"></p>
+    <div id="moduloBtns"></div>
+  </div>
+</div>
+
+<script>
+  const MODULO_INFO = {
+    FORECAST:  { icon:'📊', nome:'Forecast',      desc:'Previsão de Demanda' },
+    PMP:       { icon:'📋', nome:'PMP',           desc:'Plano Mestre de Produção' },
+    MRP:       { icon:'⚙️', nome:'MRP',           desc:'Planejamento de Materiais' },
+    ESTOQUE:   { icon:'📦', nome:'Estoque',       desc:'Controle de Estoque' },
+    CRP:       { icon:'🏭', nome:'CRP',           desc:'Planejamento de Capacidade' },
+    DASHBOARD: { icon:'📈', nome:'Dashboard',     desc:'Painel de Controle' },
+    ADMIN:     { icon:'🛠️', nome:'Administração', desc:'Painel do Administrador' },
+  };
+
+  function toggleSenha() {
+    const inp = document.getElementById('senha');
+    const btn = document.querySelector('.eye-btn');
+    inp.type = inp.type==='password' ? 'text' : 'password';
+    btn.textContent = inp.type==='password' ? '👁' : '🙈';
+  }
+  function mostrarMsg(id, texto, tipo) {
+    const el = document.getElementById(id);
+    el.textContent = texto; el.className = `msg ${tipo}`; el.style.display = 'block';
+  }
+
+  async function fazerLogin() {
+    const email = document.getElementById('email').value.trim();
+    const senha = document.getElementById('senha').value;
+    document.getElementById('msg').style.display = 'none';
+    if (!email || !senha) return mostrarMsg('msg','Preencha e-mail e senha.','err');
+
+    const btn = document.getElementById('btnLogin');
+    const txt = document.getElementById('btnText');
+    const sp  = document.getElementById('spinner');
+    btn.disabled=true; txt.style.display='none'; sp.style.display='block';
+
+    try {
+      const r = await fetch('/api/login', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({email, senha})
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.erro || 'Erro ao fazer login.');
+
+      txt.style.display='block'; txt.textContent='✔ Acesso liberado!'; sp.style.display='none';
+      btn.style.background='linear-gradient(135deg,#15803d,#22c55e)';
+
+      setTimeout(() => {
+        if (d.redirecionar) window.location.href = d.redirecionar;
+        else abrirMenuModulos(d.usuario.nome, d.telasDisponiveis);
+      }, 500);
+    } catch(e) {
+      btn.disabled=false; txt.style.display='block'; txt.textContent='Entrar no Sistema'; sp.style.display='none';
+      // Se bloqueado (429), desabilita o botão por 15 minutos
+      if (e.message.includes('bloqueado') || e.message.includes('Muitas tentativas')) {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor  = 'not-allowed';
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          btn.style.cursor  = 'pointer';
+          mostrarMsg('msg', 'Você pode tentar novamente agora.', 'ok');
+        }, 15 * 60 * 1000);
+      }
+      mostrarMsg('msg', e.message, 'err');
+    }
+  }
+
+  function abrirMenuModulos(nome, telas) {
+    document.getElementById('moduloSub').textContent = `Olá, ${nome}! Você tem acesso a ${telas.length} módulos.`;
+    const c = document.getElementById('moduloBtns');
+    c.innerHTML = '';
+    telas.forEach(t => {
+      const info = MODULO_INFO[t.funcao] || {icon:'🔧',nome:t.funcao,desc:''};
+      const a = document.createElement('a');
+      a.href = t.url; a.className = 'modulo-btn';
+      a.innerHTML = `<span class="m-icon">${info.icon}</span>
+        <div><div class="m-nome">${info.nome}</div><div class="m-desc">${info.desc}</div></div>
+        <span class="m-arrow">›</span>`;
+      c.appendChild(a);
+    });
+    document.getElementById('moduloOverlay').style.display = 'flex';
+  }
+
+  document.getElementById('forgotBtn').addEventListener('click', () => {
+    document.getElementById('modalSenha').style.display = 'flex';
+  });
+  function fecharModal() {
+    document.getElementById('modalSenha').style.display = 'none';
+    document.getElementById('resetMsg').style.display = 'none';
+    document.getElementById('resetEmail').value = '';
+    const btn = document.getElementById('resetBtn');
+    btn.disabled=false; btn.textContent='Enviar';
+  }
+  async function enviarReset() {
+    const email = document.getElementById('resetEmail').value.trim();
+    if (!email) return mostrarMsg('resetMsg','Informe seu e-mail.','err');
+    const btn = document.getElementById('resetBtn');
+    btn.disabled=true; btn.textContent='Enviando...';
+    try {
+      const r = await fetch('/api/senha/solicitar', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email})
+      });
+      const d = await r.json();
+      mostrarMsg('resetMsg', d.mensagem||d.erro, r.ok?'ok':'err');
+      if (r.ok) btn.textContent='Enviado!';
+      else { btn.disabled=false; btn.textContent='Enviar'; }
+    } catch { mostrarMsg('resetMsg','Erro de conexão.','err'); btn.disabled=false; btn.textContent='Enviar'; }
+  }
+
+  document.getElementById('senha').addEventListener('keydown', e => { if(e.key==='Enter') fazerLogin(); });
+
+  // Preenche e-mail se veio da tela de primeiro acesso
+  const urlEmail = new URLSearchParams(window.location.search).get('email');
+  if (urlEmail) {
+    document.getElementById('email').value = urlEmail;
+    document.getElementById('senha').focus();
+  }
+
+  // Pré-preenche e-mail se veio do primeiro-acesso
+  const emailSalvo = localStorage.getItem('flowprod_executor_email');
+  if (emailSalvo) {
+    document.getElementById('email').value = emailSalvo;
+    localStorage.removeItem('flowprod_executor_email');
+    document.getElementById('senha').focus();
+  }
+  document.addEventListener('keydown', e => { if(e.key==='Escape') fecharModal(); });
+
+
+</script>
+</body>
+</html>

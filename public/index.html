@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlowProd — Sistema de Planejamento de Produção</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#060b11; --surface:#0d1520; --border:#1a2740;
+    --text:#e8edf5; --muted:#6b82a0; --dim:#3a5070;
+    --blue:#2b7fff; --blue-dk:#1a5ccc; --cyan:#06b6d4; --green:#22c55e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;overflow-x:hidden;}
+
+  /* NAV */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;
+    background:rgba(6,11,17,.9);backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(26,39,64,.5);
+    height:60px;padding:0 48px;display:flex;align-items:center;justify-content:space-between;}
+  .nav-logo{font-size:20px;font-weight:800;color:var(--blue);letter-spacing:1.5px;}
+  .nav-links{display:flex;gap:8px;}
+  .nav-btn{padding:7px 20px;border-radius:8px;font-size:13px;font-weight:600;
+    cursor:pointer;font-family:'Poppins',sans-serif;transition:.2s;text-decoration:none;
+    display:inline-flex;align-items:center;gap:6px;}
+  .nav-btn.out{background:none;border:1px solid var(--border);color:var(--muted);}
+  .nav-btn.out:hover{border-color:var(--blue);color:var(--blue);}
+  .nav-btn.sol{background:var(--blue);border:1px solid var(--blue);color:#fff;}
+  .nav-btn.sol:hover{background:var(--blue-dk);}
+
+  /* HERO */
+  .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;padding:80px 24px 60px;position:relative;overflow:hidden;}
+  .hero-grid{position:absolute;inset:0;
+    background-image:linear-gradient(rgba(43,127,255,.04) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(43,127,255,.04) 1px,transparent 1px);
+    background-size:52px 52px;}
+  .hero-glow{position:absolute;top:15%;left:50%;transform:translateX(-50%);
+    width:700px;height:500px;
+    background:radial-gradient(ellipse,rgba(43,127,255,.13) 0%,transparent 68%);}
+  .hero-content{position:relative;z-index:1;max-width:780px;}
+
+  .hero-tag{display:inline-flex;align-items:center;gap:8px;
+    background:rgba(43,127,255,.1);border:1px solid rgba(43,127,255,.22);
+    color:var(--blue);padding:5px 18px;border-radius:100px;
+    font-size:12px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;margin-bottom:32px;}
+  .pulse{width:7px;height:7px;border-radius:50%;background:var(--blue);
+    animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.5)}}
+
+  h1{font-size:clamp(38px,6.5vw,72px);font-weight:800;line-height:1.05;
+    letter-spacing:-1.5px;margin-bottom:22px;}
+  h1 em{font-style:normal;color:var(--blue);}
+  .hero-sub{font-size:clamp(15px,2vw,18px);color:var(--muted);
+    line-height:1.8;max-width:580px;margin:0 auto 16px;}
+  .hero-sub2{font-size:13px;color:var(--dim);margin-bottom:52px;}
+
+  /* BOTÕES HERO */
+  .hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+  .hbtn{display:flex;align-items:center;gap:10px;
+    padding:16px 32px;border-radius:12px;font-size:15px;font-weight:700;
+    cursor:pointer;text-decoration:none;transition:.25s;border:1px solid transparent;}
+  .hbtn.colab{background:var(--blue);color:#fff;}
+  .hbtn.colab:hover{background:var(--blue-dk);transform:translateY(-2px);}
+  .hbtn.cli{background:var(--surface);border-color:var(--cyan);color:var(--cyan);}
+  .hbtn.cli:hover{background:rgba(6,182,212,.08);transform:translateY(-2px);}
+  .hbtn-icon{font-size:20px;}
+
+  /* SOBRE */
+  .sobre{padding:80px 24px;display:flex;flex-direction:column;align-items:center;gap:40px;}
+  .section-label{font-size:11px;font-weight:700;letter-spacing:2px;
+    text-transform:uppercase;color:var(--blue);margin-bottom:4px;}
+  .section-title{font-size:clamp(24px,4vw,38px);font-weight:800;text-align:center;line-height:1.2;}
+  .section-title em{font-style:normal;color:var(--blue);}
+  .sobre-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;
+    max-width:960px;width:100%;align-items:center;}
+  .sobre-texto p{font-size:15px;color:var(--muted);line-height:1.9;margin-bottom:14px;}
+  .sobre-stats{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:20px;text-align:center;}
+  .stat-num{font-size:32px;font-weight:800;color:var(--blue);}
+  .stat-label{font-size:12px;color:var(--muted);margin-top:4px;}
+
+  /* PAPÉIS */
+  .papeis{padding:80px 24px;background:var(--surface);
+    border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+    display:flex;flex-direction:column;align-items:center;gap:48px;}
+  .papeis-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:20px;max-width:1000px;width:100%;}
+  .papel-card{background:var(--bg);border:1px solid var(--border);border-radius:14px;
+    padding:28px;display:flex;flex-direction:column;gap:12px;transition:.25s;}
+  .papel-card:hover{border-color:var(--blue);transform:translateY(-3px);}
+  .papel-icon{font-size:36px;}
+  .papel-nome{font-size:16px;font-weight:700;}
+  .papel-desc{font-size:13px;color:var(--muted);line-height:1.7;}
+  .papel-tag{display:inline-block;padding:3px 10px;border-radius:5px;font-size:11px;
+    font-weight:700;letter-spacing:.8px;text-transform:uppercase;width:fit-content;}
+  .tag-blue{background:rgba(43,127,255,.12);color:var(--blue);border:1px solid rgba(43,127,255,.2);}
+  .tag-cyan{background:rgba(6,182,212,.12);color:var(--cyan);border:1px solid rgba(6,182,212,.2);}
+  .tag-green{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2);}
+
+  /* MÓDULOS */
+  .modulos{padding:80px 24px;display:flex;flex-direction:column;align-items:center;gap:48px;}
+  .modulos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:16px;max-width:1000px;width:100%;}
+  .mod-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:24px 20px;display:flex;flex-direction:column;gap:10px;}
+  .mod-icon{font-size:32px;filter:drop-shadow(0 0 12px rgba(43,127,255,.3));}
+  .mod-nome{font-size:14px;font-weight:700;}
+  .mod-desc{font-size:12px;color:var(--muted);line-height:1.6;}
+
+  /* CTA FINAL */
+  .cta{padding:100px 24px;display:flex;flex-direction:column;align-items:center;
+    gap:32px;text-align:center;position:relative;overflow:hidden;}
+  .cta-glow{position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+    width:600px;height:300px;
+    background:radial-gradient(ellipse,rgba(43,127,255,.1) 0%,transparent 70%);}
+  .cta-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:20px;}
+  .cta h2{font-size:clamp(28px,5vw,48px);font-weight:800;line-height:1.15;}
+  .cta h2 em{font-style:normal;color:var(--blue);}
+  .cta p{color:var(--muted);font-size:15px;max-width:500px;line-height:1.8;}
+  .cta-btns{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:8px;}
+  .cta-btn{display:flex;flex-direction:column;align-items:center;gap:8px;
+    padding:28px 44px;border-radius:16px;cursor:pointer;text-decoration:none;
+    transition:.25s;border:1px solid var(--border);}
+  .cta-btn.colab{background:var(--blue);border-color:var(--blue);color:#fff;}
+  .cta-btn.colab:hover{background:var(--blue-dk);transform:translateY(-4px);
+    box-shadow:0 12px 32px rgba(43,127,255,.3);}
+  .cta-btn.cli{background:var(--surface);border-color:var(--cyan);color:var(--cyan);}
+  .cta-btn.cli:hover{background:rgba(6,182,212,.06);transform:translateY(-4px);
+    box-shadow:0 12px 32px rgba(6,182,212,.15);}
+  .cta-btn-icon{font-size:36px;}
+  .cta-btn-label{font-size:17px;font-weight:700;}
+  .cta-btn-sub{font-size:12px;opacity:.75;text-align:center;}
+
+  footer{text-align:center;padding:24px;border-top:1px solid var(--border);
+    font-size:12px;color:var(--dim);}
+
+  @media(max-width:700px){
+    nav{padding:0 20px;}
+    .sobre-grid{grid-template-columns:1fr;}
+    .cta-btn{padding:20px 28px;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo">FlowProd</span>
+  <div class="nav-links">
+    <a href="/login.html" class="nav-btn out">🏭 Colaborador</a>
+    <a href="/cliente.html" class="nav-btn sol">🛒 Sou Cliente</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-content">
+    <div class="hero-tag"><span class="pulse"></span>Sistema Integrado de Produção</div>
+    <h1>Do pedido à entrega,<br>tudo em <em>um lugar</em></h1>
+    <p class="hero-sub">
+      FlowProd é o sistema de planejamento de produção que conecta clientes, forecast,
+      materiais, estoque e capacidade em uma única plataforma.
+    </p>
+  </div>
+</section>
+
+<!-- SOBRE -->
+<section class="sobre">
+  <div style="text-align:center;">
+    <div class="section-label">Sobre o Sistema</div>
+    <div class="section-title">Planejamento inteligente<br>para <em>toda a cadeia</em></div>
+  </div>
+  <div class="sobre-grid">
+    <div class="sobre-texto">
+      <p>
+        FlowProd foi desenvolvido para centralizar e integrar os processos de
+        planejamento de produção, eliminando planilhas isoladas e comunicação fragmentada.
+      </p>
+      <p>
+        Do recebimento do pedido do cliente até a análise de capacidade de máquinas,
+        cada etapa é registrada, rastreada e visível para os responsáveis certos — no momento certo.
+      </p>
+      <p>
+        Com controle de acesso por função, notificações em tempo real e histórico de ações,
+        o sistema garante transparência e rastreabilidade em todo o processo produtivo.
+      </p>
+    </div>
+    <div class="sobre-stats">
+      <div class="stat-card">
+        <div class="stat-num">6</div>
+        <div class="stat-label">Módulos integrados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Perfis de acesso</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">100%</div>
+        <div class="stat-label">Web — sem instalação</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">∞</div>
+        <div class="stat-label">Rastreabilidade</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PAPÉIS -->
+<section class="papeis">
+  <div style="text-align:center;">
+    <div class="section-label">Quem usa o sistema</div>
+    <div class="section-title">Cada papel,<br><em>no lugar certo</em></div>
+  </div>
+  <div class="papeis-grid">
+    <div class="papel-card">
+      <span class="papel-icon">🛠️</span>
+      <span class="papel-tag tag-blue">Administrador</span>
+      <span class="papel-nome">Administrador</span>
+      <p class="papel-desc">Gerencia colaboradores, aprova acessos de clientes, redefine senhas e acompanha logs de todas as ações do sistema.</p>
+    </div>
+    <div class="papel-card">
+      <span class="papel-icon">🏭</span>
+      <span class="papel-tag tag-green">Colaborador</span>
+      <span class="papel-nome">Colaboradores / Executores</span>
+      <p class="papel-desc">Acessam os módulos de Forecast, PMP, MRP, Estoque, CRP e Dashboard conforme as funções atribuídas pelo administrador.</p>
+    </div>
+    <div class="papel-card">
+      <span class="papel-icon">🛒</span>
+      <span class="papel-tag tag-cyan">Cliente</span>
+      <span class="papel-nome">Clientes</span>
+      <p class="papel-desc">Solicitam acesso ao sistema, acompanham o status da aprovação em tempo real e enviam pedidos diretamente ao Forecast.</p>
+    </div>
+  </div>
+</section>
+
+<!-- MÓDULOS -->
+<section class="modulos">
+  <div style="text-align:center;">
+    <div class="section-label">Módulos</div>
+    <div class="section-title">Tudo que sua <em>operação</em> precisa</div>
+  </div>
+  <div class="modulos-grid">
+    <div class="mod-card"><span class="mod-icon">📊</span><span class="mod-nome">Forecast</span><p class="mod-desc">Previsão de demanda futura com base em histórico e tendências de mercado.</p></div>
+    <div class="mod-card"><span class="mod-icon">📋</span><span class="mod-nome">PMP</span><p class="mod-desc">Plano Mestre de Produção com ordens planejadas e horizonte de planejamento.</p></div>
+    <div class="mod-card"><span class="mod-icon">⚙️</span><span class="mod-nome">MRP</span><p class="mod-desc">Explosão de materiais, lead times e geração de ordens de compra sugeridas.</p></div>
+    <div class="mod-card"><span class="mod-icon">📦</span><span class="mod-nome">Estoque</span><p class="mod-desc">Controle de inventário, entradas, saídas, saldo atual e ponto de reposição.</p></div>
+    <div class="mod-card"><span class="mod-icon">🏭</span><span class="mod-nome">CRP</span><p class="mod-desc">Planejamento de capacidade, carga de máquinas, gargalos e análise de turnos.</p></div>
+    <div class="mod-card"><span class="mod-icon">📈</span><span class="mod-nome">Dashboard</span><p class="mod-desc">KPIs e indicadores consolidados de toda a operação em tempo real.</p></div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta">
+  <div class="cta-glow"></div>
+  <div class="cta-content">
+    <div class="section-label">Acesso ao Sistema</div>
+    <h2>Por onde você<br>quer <em>entrar?</em></h2>
+    <p>Selecione seu perfil abaixo para acessar o sistema ou solicitar seu acesso.</p>
+    <div class="cta-btns">
+      <a href="/login.html" class="cta-btn colab">
+        <span class="cta-btn-icon">🏭</span>
+        <span class="cta-btn-label">Sou Colaborador</span>
+        <span class="cta-btn-sub">Acesso com e-mail e senha</span>
+      </a>
+      <a href="/solicitar-acesso.html" class="cta-btn" style="background:var(--surface);border-color:var(--blue);color:var(--blue);">
+        <span class="cta-btn-icon">📋</span>
+        <span class="cta-btn-label">Solicitar Acesso</span>
+        <span class="cta-btn-sub">Novo colaborador? Solicite aqui</span>
+      </a>
+      <a href="/cliente.html" class="cta-btn cli">
+        <span class="cta-btn-icon">🛒</span>
+        <span class="cta-btn-label">Sou Cliente</span>
+        <span class="cta-btn-sub">Login ou solicitar acesso</span>
+      </a>
+    </div>
+  </div>
+</section>
+</body>
+</html>
